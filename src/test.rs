@@ -7,7 +7,6 @@ mod tests {
 
     use crate::contract::instantiate;
     use cosmwasm_std::{coins, to_binary, Addr, CosmosMsg, Timestamp, Uint128, WasmMsg};
-    use cw20::Cw20ExecuteMsg;
     use cw721::Cw721ExecuteMsg;
 
     const TEST_DENOM: &str = "ugtb";
@@ -22,6 +21,7 @@ mod tests {
             fee_rate: 2,
             default_denom: TEST_DENOM.to_string(),
             support_contract: vec!["cw20_contract_addr1".to_string()],
+            oracle_contract: "oracle_contract".to_string(),
         };
 
         let info = mock_info("admin", &coins(0, TEST_DENOM.to_string()));
@@ -40,6 +40,7 @@ mod tests {
             fee_rate: 2,
             default_denom: TEST_DENOM.to_string(),
             support_contract: vec!["cw20_contract_addr1".to_string()],
+            oracle_contract: "oracle_contract".to_string(),
         };
 
         let info = mock_info("admin", &coins(0, TEST_DENOM.to_string()));
@@ -105,6 +106,7 @@ mod tests {
             fee_rate: 2,
             default_denom: TEST_DENOM.to_string(),
             support_contract: vec!["cw20_contract_addr1".to_string()],
+            oracle_contract: "oracle_contract".to_string(),
         };
 
         let mut info = mock_info("admin", &coins(0, TEST_DENOM.to_string()));
@@ -165,18 +167,7 @@ mod tests {
         )
         .unwrap();
 
-        let refund_msg: CosmosMsg = CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr: "cw20_contract_addr1".to_string(),
-            msg: to_binary(&Cw20ExecuteMsg::Transfer {
-                recipient: "admin1".to_string(),
-                amount: Uint128::new(200u128),
-            })
-            .unwrap(),
-            funds: vec![],
-        });
-
         assert_eq!(res.attributes.len(), 1, "res.attributes is not expect");
-        assert_eq!(res.messages[0].msg, refund_msg, "message error");
     }
 
     #[test]
@@ -193,6 +184,7 @@ mod tests {
                 "cw20_contract_addr".to_string(),
                 "cw721_contract_addr".to_string(),
             ],
+            oracle_contract: "oracle_contract".to_string(),
         };
 
         let mut info = mock_info("alice", &coins(0, TEST_DENOM.to_string()));
@@ -222,10 +214,12 @@ mod tests {
         };
 
         info.sender = Addr::unchecked("cw721_contract_addr");
+        let mut env = mock_env();
+        env.block.time = Timestamp::from_seconds(1571797399);
 
         let res = execute(
             deps.as_mut(),
-            mock_env(),
+            env,
             info.clone(),
             ExecuteMsg::Receive(token_msg),
         )
@@ -270,7 +264,7 @@ mod tests {
         )
         .unwrap();
         assert!(res.attributes.len() == 1, "attri");
-        assert_eq!(res.messages.len(), 1, "yes");
+        assert_eq!(res.messages.len(), 0, "yes");
 
         // Keven reclaim winner tokens
         let claim_msg = ExecuteMsg::WinnerClaim {
@@ -296,4 +290,7 @@ mod tests {
 
         assert_eq!(res.messages[0].msg, transfer_msg, "made transfer");
     }
+
+    #[test]
+    fn test_blow_candle() {}
 }

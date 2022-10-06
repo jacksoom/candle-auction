@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 
-all: fmt check schema
+all: fmt check schema test
 
 fmt:
 	cargo fmt --all -- --check
@@ -9,4 +9,8 @@ fmt:
 check:
 	cargo check --tests
 
-.PHONY: fmt check schema
+test:
+	cargo test
+
+
+.PHONY: fmt check schema test

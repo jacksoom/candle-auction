@@ -19,6 +19,7 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     let owner = deps.api.addr_canonicalize(info.sender.as_str())?;
+    let oracle_contract = deps.api.addr_canonicalize(&msg.oracle_contract)?;
 
     CONFIG.save(
         deps.storage,
@@ -35,6 +36,7 @@ pub fn instantiate(
                 version: CONTRACT_VERSION.to_string(),
             },
             owner,
+            oracle_contract,
         },
     )?;
 
@@ -75,6 +77,7 @@ pub fn execute(
         ExecuteMsg::WinnerClaim { auction_id, winner } => {
             execute::winner_claim(deps, env, info, auction_id, winner)
         }
+        ExecuteMsg::BlowCandle { auction_id } => execute::blow_candle(deps, env, auction_id),
         _ => Err(ContractError::InvalidName {}),
     }
 }

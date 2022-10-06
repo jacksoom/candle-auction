@@ -1,6 +1,8 @@
 use cosmwasm_std::{
-    from_binary, to_binary, Coin, CosmosMsg, DepsMut, Env, MessageInfo, Response, Uint128, WasmMsg,
+    from_binary, to_binary, CosmosMsg, DepsMut, Env, MessageInfo, Response, Uint128, WasmMsg,
 };
+
+const DRAND_NEXT_ROUND_SECURITY: u64 = 10;
 
 pub mod execute {
     use super::*;
@@ -8,7 +10,9 @@ pub mod execute {
     use crate::msg::Auction as AuctionMsg;
     use crate::msg::TokenMsg;
     use crate::state::*;
+    use cosmwasm_std::BankMsg;
     use cosmwasm_std::Binary;
+    use cosmwasm_std::Coin;
     use cw20::Cw20ExecuteMsg;
 
     #[allow(clippy::too_many_arguments)]
@@ -53,6 +57,7 @@ pub mod execute {
             pay_token,
             min_price,
             bid_num: 0,
+            is_candle_blow: false,
         };
 
         let auction_id = config.auction_num + 1;
@@ -158,18 +163,11 @@ pub mod execute {
 
         let winner = winner.unwrap_or_else(|| info.sender.to_string());
 
-        let now = env.block.time.seconds();
-
-        if now
-            < auction
-                .start_timestmap
-                .checked_add(auction.auction_duration)
-                .unwrap_or(u64::MAX)
-        {
-            return Err(ContractError::BadRequest {
-                msg: "Auction is not ended".to_string(),
-            });
-        }
+        assert_eq!(
+            auction.status(env.block.time.seconds()),
+            AuctionStatus::Ended,
+            "Auction is not ended"
+        );
 
         if auction.curr_winner.is_none() || !auction.curr_winner.as_ref().unwrap().0.eq(&winner) {
             return Err(ContractError::BadRequest {
@@ -247,6 +245,7 @@ pub mod execute {
     /// 2: Whether the time can be bid
     /// 3: Highest bid price
     /// If eligible all bid rules. the bidder be the current winner. and refund to previous winner
+
     pub fn handle_cw20_bid(
         deps: DepsMut,
         env: Env,
@@ -295,33 +294,96 @@ pub mod execute {
             });
         }
 
-        let mut msgs = vec![];
-        // CW20: refund to previous round winner
-        if let Some((addr, _, amt)) = auction.curr_winner {
-            let refund_msg = Cw20ExecuteMsg::Transfer {
-                recipient: addr,
-                amount: Uint128::new(amt),
-            };
-
-            let msg: CosmosMsg = CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: auction.pay_token.clone().unwrap(),
-                msg: to_binary(&refund_msg)?,
-                funds: vec![],
-            });
-            msgs.push(msg);
-        }
-
         let bidder = auction_msg.bidder.unwrap_or(sender);
-
         auction.curr_winner = Some((bidder.clone(), now, amount.u128()));
         auction.bid_num += 1;
         auction.bidders.push((bidder, now, amount.u128()));
 
         AUCTIONS.save(deps.storage, auction_msg.id, &auction)?;
 
+        Ok(Response::new().add_attribute("method", "handle_cw20_bid"))
+    }
+
+    use super::DRAND_NEXT_ROUND_SECURITY;
+    use crate::msg::RandQueryMsg;
+    use cosmwasm_std::WasmQuery;
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+
+    pub fn blow_candle(
+        deps: DepsMut,
+        env: Env,
+        auction_id: u64,
+    ) -> Result<Response, ContractError> {
+        let config = CONFIG.load(deps.storage)?;
+        let mut auction = AUCTIONS.load(deps.storage, auction_id)?;
+        let now = env.block.time.seconds();
+        assert_eq!(
+            auction.status(now),
+            AuctionStatus::Ended,
+            "Auction status is now ended"
+        );
+
+        let rand_key = auction_id + DRAND_NEXT_ROUND_SECURITY;
+
+        let msg = RandQueryMsg::Get { round: rand_key };
+        let wasm = WasmQuery::Smart {
+            contract_addr: deps.api.addr_humanize(&config.oracle_contract)?.to_string(),
+            msg: to_binary(&msg)?,
+        };
+
+        let res: crate::msg::GetResponse = deps.querier.query(&wasm.into())?;
+        let mut hasher = DefaultHasher::new();
+        res.randomness.hash(&mut hasher);
+
+        let offset = hasher.finish() % auction.auction_duration;
+
+        let mut bank_msgs = vec![];
+        let mut cw20_refund_msg = vec![];
+
+        let end_time = offset
+            .checked_add(auction.start_timestmap)
+            .unwrap_or(u64::MAX);
+
+        auction.curr_winner = None;
+
+        for (bidder, bid_time, amount) in auction.bidders.iter().rev() {
+            if *bid_time <= end_time && auction.curr_winner.is_none() {
+                auction.curr_winner = Some((bidder.clone(), *bid_time, *amount));
+                continue;
+            }
+
+            // Refund Non winner
+            if auction.denom.is_none() {
+                let refund_msg = Cw20ExecuteMsg::Transfer {
+                    recipient: bidder.clone(),
+                    amount: Uint128::new(*amount),
+                };
+
+                let msg: CosmosMsg = CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: auction.pay_token.clone().unwrap(),
+                    msg: to_binary(&refund_msg)?,
+                    funds: vec![],
+                });
+                cw20_refund_msg.push(msg);
+            } else {
+                bank_msgs.push(BankMsg::Send {
+                    to_address: bidder.clone(),
+                    amount: vec![Coin {
+                        denom: auction.denom.clone().unwrap(),
+                        amount: Uint128::new(*amount),
+                    }],
+                });
+            }
+        }
+
+        auction.is_candle_blow = true;
+
+        AUCTIONS.save(deps.storage, auction_id, &auction)?;
+
         Ok(Response::new()
-            .add_attribute("method", "handle_cw20_bid")
-            .add_messages(msgs))
+            .add_messages(bank_msgs)
+            .add_messages(cw20_refund_msg))
     }
 
     pub fn receive(
@@ -346,6 +408,7 @@ pub mod execute {
 }
 
 pub mod query {
+    //{{{
     use crate::msg::response;
     use crate::state::{AuctionStatus, AUCTIONS, CONFIG};
     use cosmwasm_std::Env;
@@ -429,4 +492,4 @@ pub mod query {
             Err(_) => Ok(None),
         }
     }
-}
+} //}}}

@@ -17,6 +17,7 @@ pub struct Config {
     pub support_contract: Vec<String>,
     pub version: ContractVersion,
     pub owner: CanonicalAddr,
+    pub oracle_contract: CanonicalAddr,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, JsonSchema, Debug)]
@@ -57,6 +58,8 @@ pub struct Auction {
     pub min_price: Option<u128>,
     /// bid num
     pub bid_num: u32,
+    /// Auction candle has been blowed
+    pub is_candle_blow: bool,
 }
 
 impl Auction {
@@ -65,7 +68,7 @@ impl Auction {
     /// 2. Ended: current_timestamp > auction_end_time
     /// 3. OpeningPeriod
     pub fn status(&self, curr_timestamp: u64) -> AuctionStatus {
-        if self.start_timestmap < curr_timestamp {
+        if self.start_timestmap > curr_timestamp {
             return AuctionStatus::NotStarted;
         }
 

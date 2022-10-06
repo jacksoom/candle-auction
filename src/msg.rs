@@ -12,6 +12,7 @@ pub struct InstantiateMsg {
     pub fee_rate: u64,
     pub default_denom: String,
     pub support_contract: Vec<String>,
+    pub oracle_contract: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
@@ -52,7 +53,8 @@ pub enum ExecuteMsg {
         default_denom: Option<String>,
         support_contract: Option<Vec<String>>,
     },
-
+    /// Candle blow
+    BlowCandle { auction_id: u64 },
     /// Receive interface
     Receive(TokenMsg),
 }
@@ -69,6 +71,18 @@ pub enum QueryMsg {
     },
     /// Get auction by auction id
     Auction { id: u64 },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum RandQueryMsg {
+    Get { round: u64 },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct GetResponse {
+    /// The randomness if available. When the beacon does not exist, this is an empty value.
+    pub randomness: Binary,
 }
 
 #[cw_serde]
