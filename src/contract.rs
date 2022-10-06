@@ -1,11 +1,13 @@
 use crate::error::ContractError;
+use crate::handler::query;
 use crate::handler::*;
+use crate::msg::QueryMsg;
 use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg};
 use crate::state::{Config, ContractVersion, CONFIG};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{entry_point, DepsMut, Env, MessageInfo, Response, StdError};
+use cosmwasm_std::{to_binary, Binary, Deps, StdResult};
 use cw2::{get_contract_version, set_contract_version};
-
 const CONTRACT_NAME: &str = "crates.io:candle_auction";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -74,6 +76,19 @@ pub fn execute(
             execute::winner_claim(deps, env, info, auction_id, winner)
         }
         _ => Err(ContractError::InvalidName {}),
+    }
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    match msg {
+        QueryMsg::Config {} => to_binary(&query::config(deps)?),
+        QueryMsg::Auction { id } => to_binary(&query::auction(deps, id)?),
+        QueryMsg::AuctionList {
+            status,
+            page,
+            limit,
+        } => to_binary(&query::auction_list(deps, env, status, page, limit)?),
     }
 }
 

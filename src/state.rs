@@ -40,9 +40,10 @@ pub struct Auction {
     /// End second-level timestamp to bid, end_timestamp = start_timestmap + auction_duration
     pub auction_duration: u64,
     /// Bidder infomation
-    pub bidders: Vec<(String, u128)>,
-    /// Current winner (with bid) who finally won Candle auction
-    pub curr_winner: Option<(String, u128)>,
+    pub bidders: Vec<(String, u64, u128)>,
+    /// Current winner (with bid) who finally won Candle auction.
+    /// (bidder_address, bid_timestamp, bid_price)
+    pub curr_winner: Option<(String, u64, u128)>,
     /// ERC721 contract
     /// rewarding contract address (NFT or DNS), token id
     pub tokens: Vec<(String, String)>,
@@ -58,6 +59,29 @@ pub struct Auction {
     pub bid_num: u32,
 }
 
+impl Auction {
+    /// Calc auction status  by the given current time
+    /// 1. Not started: start_timestmap < current_timestamp
+    /// 2. Ended: current_timestamp > auction_end_time
+    /// 3. OpeningPeriod
+    pub fn status(&self, curr_timestamp: u64) -> AuctionStatus {
+        if self.start_timestmap < curr_timestamp {
+            return AuctionStatus::NotStarted;
+        }
+
+        if curr_timestamp
+            > self
+                .start_timestmap
+                .checked_add(self.auction_duration)
+                .unwrap_or(u64::MAX)
+        {
+            return AuctionStatus::Ended;
+        }
+
+        AuctionStatus::OpeningPeriod
+    }
+}
+
 /// Auction statuses
 /// logic inspired by
 /// [Parachain Auction](https://github.com/paritytech/polkadot/blob/master/runtime/common/src/traits.rs#L160)
@@ -67,10 +91,6 @@ pub enum AuctionStatus {
     NotStarted,
     /// We are in the starting period of the auction, collecting initial bids.
     OpeningPeriod,
-    /// We are in the ending period of the auction, where we are taking snapshots of the winning
-    /// bids. Snapshots are taken currently on per-block basis, but this logic could be later evolve
-    /// to take snapshots of on arbitrary length (in blocks)
-    EndingPeriod,
     /// Candle was blown
     Ended,
 }

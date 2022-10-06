@@ -1,3 +1,4 @@
+use crate::state::AuctionStatus;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Binary, Uint128};
 use schemars::JsonSchema;
@@ -57,6 +58,20 @@ pub enum ExecuteMsg {
 }
 
 #[cw_serde]
+pub enum QueryMsg {
+    /// Get auction static config
+    Config {},
+    /// Get Auction list
+    AuctionList {
+        status: Option<AuctionStatus>,
+        page: u32,
+        limit: u32,
+    },
+    /// Get auction by auction id
+    Auction { id: u64 },
+}
+
+#[cw_serde]
 #[serde(untagged)]
 pub enum TokenMsg {
     Cw20ReceiveMsg {
@@ -84,7 +99,6 @@ pub mod response {
         pub fee_rate: u64,
         pub default_denom: String,
         pub support_contract: Vec<String>,
-        pub owner: Addr,
     }
 
     #[cw_serde]
@@ -92,8 +106,8 @@ pub mod response {
         pub name: String,
         pub start_timestmap: u64,
         pub auction_duration: u64,
-        pub bidders: Vec<(String, u128)>,
-        pub curr_winner: Option<(String, u128)>,
+        pub bidders: Vec<(String, u64, u128)>,
+        pub curr_winner: Option<(String, u64, u128)>,
         pub tokens: Vec<(String, String)>,
         pub seller: Addr,
         pub denom: Option<String>,

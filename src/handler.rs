@@ -118,7 +118,7 @@ pub mod execute {
             .find(|fund| fund.denom.eq(&auction.denom.clone().unwrap()))
             .unwrap_or(default_fund);
 
-        let min_price = if let Some((_, amt)) = auction.curr_winner {
+        let min_price = if let Some((_, _, amt)) = auction.curr_winner {
             u128::max(amt, auction.min_price.unwrap_or(0u128))
         } else {
             auction.min_price.unwrap_or(0u128)
@@ -135,8 +135,10 @@ pub mod execute {
 
         // Update auction status
         auction.bid_num += 1;
-        auction.bidders.push((bidder.clone(), fund.amount.u128()));
-        auction.curr_winner = Some((bidder, fund.amount.u128()));
+        auction
+            .bidders
+            .push((bidder.clone(), now, fund.amount.u128()));
+        auction.curr_winner = Some((bidder, now, fund.amount.u128()));
 
         AUCTIONS.save(deps.storage, auction_id, &auction)?;
 
@@ -218,18 +220,13 @@ pub mod execute {
         let auction_msg: AuctionMsg = from_binary(&msg)?;
 
         let mut auction = AUCTIONS.load(deps.storage, auction_msg.id)?;
-
         let now = env.block.time.seconds();
-        if now
-            >= auction
-                .start_timestmap
-                .checked_add(auction.auction_duration)
-                .unwrap_or(u64::MAX)
-        {
-            return Err(ContractError::BadRequest {
-                msg: "Auction was ended!".to_string(),
-            });
-        }
+
+        assert_eq!(
+            auction.status(now),
+            AuctionStatus::NotStarted,
+            "Auction status is now NotStarted"
+        );
 
         assert_eq!(
             deps.api.addr_humanize(&auction.seller).unwrap().to_string(),
@@ -265,6 +262,14 @@ pub mod execute {
 
         let mut auction = AUCTIONS.load(deps.storage, auction_msg.id)?;
 
+        let now = env.block.time.seconds();
+
+        assert_eq!(
+            auction.status(now),
+            AuctionStatus::OpeningPeriod,
+            "Cannot bid right now"
+        );
+
         if !auction
             .pay_token
             .clone()
@@ -276,20 +281,7 @@ pub mod execute {
             });
         }
 
-        let now = env.block.time.seconds();
-        if now < auction.start_timestmap
-            || now
-                > auction
-                    .start_timestmap
-                    .checked_add(auction.auction_duration)
-                    .unwrap_or(u64::MAX)
-        {
-            return Err(ContractError::BadRequest {
-                msg: "Auction was ended!".to_string(),
-            });
-        }
-
-        let min_price = if let Some((_, amt)) = auction.curr_winner {
+        let min_price = if let Some((_, _, amt)) = auction.curr_winner {
             u128::max(amt, auction.min_price.unwrap_or(0u128))
         } else {
             auction.min_price.unwrap_or(0u128)
@@ -305,7 +297,7 @@ pub mod execute {
 
         let mut msgs = vec![];
         // CW20: refund to previous round winner
-        if let Some((addr, amt)) = auction.curr_winner {
+        if let Some((addr, _, amt)) = auction.curr_winner {
             let refund_msg = Cw20ExecuteMsg::Transfer {
                 recipient: addr,
                 amount: Uint128::new(amt),
@@ -321,9 +313,9 @@ pub mod execute {
 
         let bidder = auction_msg.bidder.unwrap_or(sender);
 
-        auction.curr_winner = Some((bidder.clone(), amount.u128()));
+        auction.curr_winner = Some((bidder.clone(), now, amount.u128()));
         auction.bid_num += 1;
-        auction.bidders.push((bidder, amount.u128()));
+        auction.bidders.push((bidder, now, amount.u128()));
 
         AUCTIONS.save(deps.storage, auction_msg.id, &auction)?;
 
@@ -349,6 +341,92 @@ pub mod execute {
                 token_id,
                 msg,
             } => handle_cw721(deps, info, env, sender, token_id, msg),
+        }
+    }
+}
+
+pub mod query {
+    use crate::msg::response;
+    use crate::state::{AuctionStatus, AUCTIONS, CONFIG};
+    use cosmwasm_std::Env;
+    use cosmwasm_std::{Deps, StdResult};
+
+    pub fn config(deps: Deps) -> StdResult<response::Config> {
+        let config = CONFIG.load(deps.storage)?;
+        Ok(response::Config {
+            auction_num: config.auction_num,
+            min_auction_duration: config.min_auction_duration,
+            max_auction_duration: config.max_auction_duration,
+            enable_auction: config.enable_auction,
+            fee_rate: config.fee_rate,
+            default_denom: config.default_denom,
+            support_contract: config.support_contract,
+        })
+    }
+
+    pub fn auction_list(
+        deps: Deps,
+        env: Env,
+        status: Option<AuctionStatus>,
+        page: u32,
+        limit: u32,
+    ) -> StdResult<Option<Vec<response::Auction>>> {
+        let config = CONFIG.load(deps.storage)?;
+        let start_amount = page * limit;
+        let mut count = 0;
+        let mut res = vec![];
+
+        for i in (0..(config.auction_num as usize)).rev() {
+            let auction = AUCTIONS.load(deps.storage, i as u64)?;
+            if let Some(status) = status.to_owned() {
+                if auction.status(env.block.time.seconds()) != status {
+                    continue;
+                }
+            }
+
+            if count >= start_amount {
+                res.push(response::Auction {
+                    name: auction.name,
+                    start_timestmap: auction.start_timestmap,
+                    auction_duration: auction.auction_duration,
+                    bidders: auction.bidders,
+                    curr_winner: auction.curr_winner,
+                    tokens: auction.tokens,
+                    seller: deps.api.addr_humanize(&auction.seller)?,
+                    denom: auction.denom,
+                    pay_token: auction.pay_token,
+                    min_price: auction.min_price,
+                    bid_num: auction.bid_num,
+                });
+            }
+
+            if res.len() >= limit as usize {
+                break;
+            }
+
+            count += 1;
+        }
+
+        Ok(Some(res))
+    }
+
+    pub fn auction(deps: Deps, auction_id: u64) -> StdResult<Option<response::Auction>> {
+        let auction_res = AUCTIONS.load(deps.storage, auction_id);
+        match auction_res {
+            Ok(auction) => Ok(Some(response::Auction {
+                name: auction.name,
+                start_timestmap: auction.start_timestmap,
+                auction_duration: auction.auction_duration,
+                bidders: auction.bidders,
+                curr_winner: auction.curr_winner,
+                tokens: auction.tokens,
+                seller: deps.api.addr_humanize(&auction.seller)?,
+                denom: auction.denom,
+                pay_token: auction.pay_token,
+                min_price: auction.min_price,
+                bid_num: auction.bid_num,
+            })),
+            Err(_) => Ok(None),
         }
     }
 }
