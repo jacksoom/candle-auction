@@ -83,6 +83,14 @@ impl Auction {
 
         AuctionStatus::OpeningPeriod
     }
+
+    pub fn bid_min_price(&self) -> u128 {
+        if let Some((_, _, amt)) = self.curr_winner {
+            u128::max(amt, self.min_price.unwrap_or(0u128))
+        } else {
+            self.min_price.unwrap_or(0u128)
+        }
+    }
 }
 
 /// Auction statuses

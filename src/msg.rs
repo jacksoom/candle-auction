@@ -34,11 +34,6 @@ pub enum ExecuteMsg {
         pay_token: Option<String>,
         min_price: Option<u128>,
     },
-    /// Bid a auction
-    Bid {
-        auction_id: u64,
-        bidder: Option<String>,
-    },
     /// Winner claim the reward
     WinnerClaim {
         auction_id: u64,
@@ -57,6 +52,8 @@ pub enum ExecuteMsg {
     BlowCandle { auction_id: u64 },
     /// Receive interface
     Receive(TokenMsg),
+    /// auction flow refund
+    FlowRefund { auction_id: u64 },
 }
 
 #[cw_serde]
