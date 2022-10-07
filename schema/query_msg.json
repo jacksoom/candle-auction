@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QueryMsg",
+  "oneOf": [
+    {
+      "description": "Get auction static config",
+      "type": "object",
+      "required": [
+        "config"
+      ],
+      "properties": {
+        "config": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Get Auction list",
+      "type": "object",
+      "required": [
+        "auction_list"
+      ],
+      "properties": {
+        "auction_list": {
+          "type": "object",
+          "required": [
+            "limit",
+            "page"
+          ],
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "page": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "status": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/AuctionStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Get auction by auction id",
+      "type": "object",
+      "required": [
+        "auction"
+      ],
+      "properties": {
+        "auction": {
+          "type": "object",
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "AuctionStatus": {
+      "description": "Auction statuses logic inspired by [Parachain Auction](https://github.com/paritytech/polkadot/blob/master/runtime/common/src/traits.rs#L160)",
+      "type": "string",
+      "enum": [
+        "NotStarted",
+        "OpeningPeriod",
+        "Ended"
+      ]
+    }
+  }
+}

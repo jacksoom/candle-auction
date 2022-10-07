@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InstantiateMsg",
+  "type": "object",
+  "required": [
+    "default_denom",
+    "enable_auction",
+    "fee_rate",
+    "max_auction_duration",
+    "min_auction_duration",
+    "oracle_contract",
+    "support_contract"
+  ],
+  "properties": {
+    "default_denom": {
+      "type": "string"
+    },
+    "enable_auction": {
+      "type": "boolean"
+    },
+    "fee_rate": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "max_auction_duration": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "min_auction_duration": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    },
+    "oracle_contract": {
+      "type": "string"
+    },
+    "support_contract": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}
