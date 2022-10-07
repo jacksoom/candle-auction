@@ -12,6 +12,7 @@ pub mod execute {
     use crate::state::*;
     use cosmwasm_std::{BankMsg, Binary, Coin};
     use cw20::Cw20ExecuteMsg;
+    use cw721::Cw721ExecuteMsg::TransferNft;
 
     #[allow(clippy::too_many_arguments)]
     pub fn auction(
@@ -22,8 +23,8 @@ pub mod execute {
         start_timestmap: u64,
         auction_duration: u64,
         tokens: Vec<(String, String)>,
-        denom: Option<String>,
-        pay_token: Option<String>,
+        payment_type: PaymentType,
+        payment: String,
         min_price: Option<u128>,
     ) -> Result<Response, ContractError> {
         let mut config = CONFIG.load(deps.storage)?;
@@ -31,12 +32,6 @@ pub mod execute {
         if now > start_timestmap + auction_duration {
             return Err(ContractError::BadRequest {
                 msg: "Bad timestamp setting".to_string(),
-            });
-        }
-
-        if (denom.is_some() && pay_token.is_some()) || (denom.is_none() && pay_token.is_none()) {
-            return Err(ContractError::BadRequest {
-                msg: "Bad payment setting".to_string(),
             });
         }
 
@@ -51,8 +46,8 @@ pub mod execute {
             curr_winner: None,
             tokens,
             seller: deps.api.addr_canonicalize(info.sender.as_str())?,
-            denom,
-            pay_token,
+            payment_type,
+            payment,
             min_price,
             bid_num: 0,
             is_candle_blow: false,
@@ -71,8 +66,7 @@ pub mod execute {
             .add_attribute("start_timestmap", auction.start_timestmap.to_string())
             .add_attribute("auction_duration", auction.auction_duration.to_string())
             .add_attribute("seller", info.sender.to_string())
-            .add_attribute("denom", auction.denom.unwrap_or_default())
-            .add_attribute("pay_token", auction.pay_token.unwrap_or_default())
+            .add_attribute("pay_token", auction.payment)
             .add_attribute(
                 "min_price",
                 auction.min_price.unwrap_or_default().to_string(),
@@ -88,9 +82,12 @@ pub mod execute {
     ) -> Result<Response, ContractError> {
         let config = CONFIG.load(deps.storage)?;
         assert!(config.enable_auction, "Auction disabled");
-
         let mut auction = AUCTIONS.may_load(deps.storage, auction_id)?.unwrap();
-
+        assert_eq!(
+            auction.payment_type,
+            PaymentType::Coin,
+            "Unsupport coin bid"
+        );
         let now = env.block.time.seconds();
 
         if !auction.status(now).eq(&AuctionStatus::OpeningPeriod) {
@@ -105,14 +102,14 @@ pub mod execute {
 
         // check bid price
         let default_fund = &Coin {
-            denom: auction.denom.clone().unwrap(),
+            denom: auction.payment.clone(),
             amount: Uint128::from(0u128),
         };
 
         let fund = info
             .funds
             .iter()
-            .find(|fund| fund.denom.eq(&auction.denom.clone().unwrap()))
+            .find(|fund| fund.denom.eq(&auction.payment))
             .unwrap_or(default_fund);
 
         let min_price = auction.bid_min_price();
@@ -250,22 +247,23 @@ pub mod execute {
 
         let now = env.block.time.seconds();
 
+        if !info.sender.to_string().eq(&auction.payment) {}
+        assert_eq!(
+            info.sender.to_string(),
+            auction.payment,
+            "Unsupport cw20 bid"
+        );
         assert_eq!(
             auction.status(now),
             AuctionStatus::OpeningPeriod,
             "Cannot bid right now"
         );
 
-        if !auction
-            .pay_token
-            .clone()
-            .unwrap_or_default()
-            .eq(&info.sender.to_string())
-        {
-            return Err(ContractError::BadRequest {
-                msg: "Unsupport contract!".to_string(),
-            });
-        }
+        assert_eq!(
+            auction.payment_type,
+            PaymentType::Cw20,
+            "Unsupport cw20 bid payment"
+        );
 
         let min_price = auction.bid_min_price();
 
@@ -337,28 +335,30 @@ pub mod execute {
                 auction.curr_winner = Some((bidder.clone(), *bid_time, *amount));
                 continue;
             }
-
-            // Refund Non winner
-            if auction.denom.is_none() {
-                let refund_msg = Cw20ExecuteMsg::Transfer {
-                    recipient: bidder.clone(),
-                    amount: Uint128::new(*amount),
-                };
-
-                let msg: CosmosMsg = CosmosMsg::Wasm(WasmMsg::Execute {
-                    contract_addr: auction.pay_token.clone().unwrap(),
-                    msg: to_binary(&refund_msg)?,
-                    funds: vec![],
-                });
-                cw20_refund_msg.push(msg);
-            } else {
-                bank_msgs.push(BankMsg::Send {
-                    to_address: bidder.clone(),
-                    amount: vec![Coin {
-                        denom: auction.denom.clone().unwrap(),
+            // make
+            match auction.payment_type {
+                PaymentType::Coin => {
+                    bank_msgs.push(BankMsg::Send {
+                        to_address: bidder.clone(),
+                        amount: vec![Coin {
+                            denom: auction.payment.clone(),
+                            amount: Uint128::new(*amount),
+                        }],
+                    });
+                }
+                PaymentType::Cw20 => {
+                    let refund_msg = Cw20ExecuteMsg::Transfer {
+                        recipient: bidder.clone(),
                         amount: Uint128::new(*amount),
-                    }],
-                });
+                    };
+
+                    let msg: CosmosMsg = CosmosMsg::Wasm(WasmMsg::Execute {
+                        contract_addr: auction.payment.clone(),
+                        msg: to_binary(&refund_msg)?,
+                        funds: vec![],
+                    });
+                    cw20_refund_msg.push(msg);
+                }
             }
         }
 
@@ -371,7 +371,6 @@ pub mod execute {
             .add_messages(cw20_refund_msg))
     }
 
-    use cw721::Cw721ExecuteMsg::TransferNft;
     pub fn receive(
         deps: DepsMut,
         env: Env,
@@ -481,8 +480,8 @@ pub mod query {
                     curr_winner: auction.curr_winner,
                     tokens: auction.tokens,
                     seller: deps.api.addr_humanize(&auction.seller)?,
-                    denom: auction.denom,
-                    pay_token: auction.pay_token,
+                    payment_type: auction.payment_type,
+                    payment: auction.payment,
                     min_price: auction.min_price,
                     bid_num: auction.bid_num,
                 });
@@ -509,8 +508,8 @@ pub mod query {
                 curr_winner: auction.curr_winner,
                 tokens: auction.tokens,
                 seller: deps.api.addr_humanize(&auction.seller)?,
-                denom: auction.denom,
-                pay_token: auction.pay_token,
+                payment_type: auction.payment_type,
+                payment: auction.payment,
                 min_price: auction.min_price,
                 bid_num: auction.bid_num,
             })),

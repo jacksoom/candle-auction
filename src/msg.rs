@@ -1,4 +1,4 @@
-use crate::state::AuctionStatus;
+use crate::state::{AuctionStatus, PaymentType};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Binary, Uint128};
 use schemars::JsonSchema;
@@ -30,8 +30,8 @@ pub enum ExecuteMsg {
         start_timestmap: u64,
         duration: u64,
         tokens: Vec<(String, String)>,
-        denom: Option<String>,
-        pay_token: Option<String>,
+        payment_type: PaymentType,
+        payment: String,
         min_price: Option<u128>,
     },
     /// Winner claim the reward
@@ -98,6 +98,7 @@ pub enum TokenMsg {
 }
 
 pub mod response {
+    use super::*;
     use cosmwasm_schema::cw_serde;
     use cosmwasm_std::Addr;
 
@@ -121,8 +122,8 @@ pub mod response {
         pub curr_winner: Option<(String, u64, u128)>,
         pub tokens: Vec<(String, String)>,
         pub seller: Addr,
-        pub denom: Option<String>,
-        pub pay_token: Option<String>,
+        pub payment_type: PaymentType,
+        pub payment: String,
         pub min_price: Option<u128>,
         pub bid_num: u32,
     }

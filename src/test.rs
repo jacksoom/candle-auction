@@ -6,9 +6,9 @@ mod tests {
     use crate::msg::*;
 
     use crate::contract::instantiate;
+    use crate::state::PaymentType;
     use cosmwasm_std::{coins, to_binary, Addr, CosmosMsg, Timestamp, Uint128, WasmMsg};
     use cw721::Cw721ExecuteMsg;
-
     const TEST_DENOM: &str = "ugtb";
 
     #[test]
@@ -51,8 +51,8 @@ mod tests {
             start_timestmap: 1664805457,
             duration: 2 * 30 * 24 * 3600,
             tokens: vec![],
-            denom: Some("ugtb".to_string()),
-            pay_token: None,
+            payment_type: PaymentType::Coin,
+            payment: "ugtb".to_string(),
             min_price: Some(123),
         };
 
@@ -79,12 +79,8 @@ mod tests {
                 value: "admin".to_string(),
             },
             Attribute {
-                key: "denom".to_string(),
-                value: "ugtb".to_string(),
-            },
-            Attribute {
                 key: "pay_token".to_string(),
-                value: "".to_string(),
+                value: "ugtb".to_string(),
             },
             Attribute {
                 key: "min_price".to_string(),
@@ -117,8 +113,8 @@ mod tests {
             start_timestmap: 1571797400,
             duration: 2 * 30 * 24 * 3600,
             tokens: vec![],
-            denom: None,
-            pay_token: Some("cw20_contract_addr1".to_string()),
+            payment_type: PaymentType::Cw20,
+            payment: "cw20_contract_addr1".to_string(),
             min_price: Some(123),
         };
 
@@ -195,8 +191,8 @@ mod tests {
             start_timestmap: 1571797400,
             duration: 2 * 30 * 24 * 3600,
             tokens: vec![],
-            denom: None,
-            pay_token: Some("cw20_contract_addr1".to_string()),
+            payment_type: PaymentType::Cw20,
+            payment: "cw20_contract_addr1".to_string(),
             min_price: Some(123),
         };
 
