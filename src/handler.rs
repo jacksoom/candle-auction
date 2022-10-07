@@ -5,14 +5,12 @@ use cosmwasm_std::{
 const DRAND_NEXT_ROUND_SECURITY: u64 = 10;
 
 pub mod execute {
+    //{{{
     use super::*;
     use crate::error::ContractError;
-    use crate::msg::Auction as AuctionMsg;
-    use crate::msg::TokenMsg;
+    use crate::msg::{Auction as AuctionMsg, TokenMsg};
     use crate::state::*;
-    use cosmwasm_std::BankMsg;
-    use cosmwasm_std::Binary;
-    use cosmwasm_std::Coin;
+    use cosmwasm_std::{BankMsg, Binary, Coin};
     use cw20::Cw20ExecuteMsg;
 
     #[allow(clippy::too_many_arguments)]
@@ -95,13 +93,7 @@ pub mod execute {
 
         let now = env.block.time.seconds();
 
-        if now < auction.start_timestmap
-            || now
-                > auction
-                    .start_timestmap
-                    .checked_add(auction.auction_duration)
-                    .unwrap_or(u64::MAX)
-        {
+        if !auction.status(now).eq(&AuctionStatus::OpeningPeriod) {
             return Err(ContractError::NotOpeningPeriod {
                 start: auction.start_timestmap,
                 end: auction
@@ -123,11 +115,7 @@ pub mod execute {
             .find(|fund| fund.denom.eq(&auction.denom.clone().unwrap()))
             .unwrap_or(default_fund);
 
-        let min_price = if let Some((_, _, amt)) = auction.curr_winner {
-            u128::max(amt, auction.min_price.unwrap_or(0u128))
-        } else {
-            auction.min_price.unwrap_or(0u128)
-        };
+        let min_price = auction.bid_min_price();
 
         if fund.amount.u128() < min_price {
             return Err(ContractError::AuctionPriceTooLow {
@@ -245,7 +233,6 @@ pub mod execute {
     /// 2: Whether the time can be bid
     /// 3: Highest bid price
     /// If eligible all bid rules. the bidder be the current winner. and refund to previous winner
-
     pub fn handle_cw20_bid(
         deps: DepsMut,
         env: Env,
@@ -280,11 +267,7 @@ pub mod execute {
             });
         }
 
-        let min_price = if let Some((_, _, amt)) = auction.curr_winner {
-            u128::max(amt, auction.min_price.unwrap_or(0u128))
-        } else {
-            auction.min_price.unwrap_or(0u128)
-        };
+        let min_price = auction.bid_min_price();
 
         // check recv amount gt min price
         if amount.u128() < min_price {
@@ -323,6 +306,8 @@ pub mod execute {
             AuctionStatus::Ended,
             "Auction status is now ended"
         );
+
+        assert!(auction.curr_winner.is_some(), "Auction flow");
 
         let rand_key = auction_id + DRAND_NEXT_ROUND_SECURITY;
 
@@ -386,6 +371,7 @@ pub mod execute {
             .add_messages(cw20_refund_msg))
     }
 
+    use cw721::Cw721ExecuteMsg::TransferNft;
     pub fn receive(
         deps: DepsMut,
         env: Env,
@@ -405,7 +391,46 @@ pub mod execute {
             } => handle_cw721(deps, info, env, sender, token_id, msg),
         }
     }
-}
+
+    /// If the auction was flow. return the token of the seller
+    pub fn auction_flow(
+        deps: DepsMut,
+        env: Env,
+        auction_id: u64,
+    ) -> Result<Response, ContractError> {
+        let mut auction = AUCTIONS.load(deps.storage, auction_id)?;
+        let now = env.block.time.seconds();
+        assert_eq!(
+            auction.status(now),
+            AuctionStatus::Ended,
+            "auction status is not done"
+        );
+
+        assert!(auction.curr_winner.is_none(), "Auction not flow");
+        assert!(!auction.is_candle_blow, "Auction is not blow right now");
+
+        let mut msgs = vec![];
+        for (addr, token_id) in auction.tokens.clone() {
+            let refund_token_msg = TransferNft {
+                recipient: deps.api.addr_humanize(&auction.seller)?.to_string(),
+                token_id,
+            };
+
+            let msg: CosmosMsg = CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: addr,
+                msg: to_binary(&refund_token_msg)?,
+                funds: vec![],
+            });
+
+            msgs.push(msg);
+        }
+
+        auction.is_candle_blow = true;
+        AUCTIONS.save(deps.storage, auction_id, &auction)?;
+
+        Ok(Response::new().add_messages(msgs))
+    }
+} //}}}
 
 pub mod query {
     //{{{

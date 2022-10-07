@@ -5,8 +5,9 @@ use crate::msg::QueryMsg;
 use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg};
 use crate::state::{Config, ContractVersion, CONFIG};
 #[cfg(not(feature = "library"))]
-use cosmwasm_std::{entry_point, DepsMut, Env, MessageInfo, Response, StdError};
-use cosmwasm_std::{to_binary, Binary, Deps, StdResult};
+use cosmwasm_std::{
+    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
+};
 use cw2::{get_contract_version, set_contract_version};
 const CONTRACT_NAME: &str = "crates.io:candle_auction";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -78,6 +79,7 @@ pub fn execute(
             execute::winner_claim(deps, env, info, auction_id, winner)
         }
         ExecuteMsg::BlowCandle { auction_id } => execute::blow_candle(deps, env, auction_id),
+        ExecuteMsg::FlowRefund { auction_id } => execute::auction_flow(deps, env, auction_id),
         _ => Err(ContractError::InvalidName {}),
     }
 }
