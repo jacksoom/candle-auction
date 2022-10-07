@@ -1,3 +1,4 @@
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::CanonicalAddr;
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
@@ -31,8 +32,13 @@ pub struct ContractVersion {
     /// migrate from the given contract (and is tied to it's implementation somehow)
     pub version: String,
 }
+#[cw_serde]
+pub enum PaymentType {
+    Coin,
+    Cw20,
+}
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, JsonSchema, Debug)]
+#[cw_serde]
 pub struct Auction {
     /// The name of the auction item
     pub name: String,
@@ -50,10 +56,10 @@ pub struct Auction {
     pub tokens: Vec<(String, String)>,
     /// Seller
     pub seller: CanonicalAddr,
-    /// bid denom
-    pub denom: Option<String>,
-    /// CW20 token bid
-    pub pay_token: Option<String>,
+    /// bid payment type.
+    pub payment_type: PaymentType,
+    /// bid payment value. denom/cw20 token address
+    pub payment: String,
     /// Bid min price
     pub min_price: Option<u128>,
     /// bid num

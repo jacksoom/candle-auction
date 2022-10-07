@@ -14,16 +14,12 @@
           "required": [
             "duration",
             "name",
+            "payment",
+            "payment_type",
             "start_timestmap",
             "tokens"
           ],
           "properties": {
-            "denom": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
             "duration": {
               "type": "integer",
               "format": "uint64",
@@ -40,11 +36,11 @@
             "name": {
               "type": "string"
             },
-            "pay_token": {
-              "type": [
-                "string",
-                "null"
-              ]
+            "payment": {
+              "type": "string"
+            },
+            "payment_type": {
+              "$ref": "#/definitions/PaymentType"
             },
             "start_timestmap": {
               "type": "integer",
@@ -225,6 +221,13 @@
     "Binary": {
       "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>. See also <https://github.com/CosmWasm/cosmwasm/blob/main/docs/MESSAGE_TYPES.md>.",
       "type": "string"
+    },
+    "PaymentType": {
+      "type": "string",
+      "enum": [
+        "coin",
+        "cw20"
+      ]
     },
     "TokenMsg": {
       "anyOf": [
