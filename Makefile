@@ -12,5 +12,7 @@ check:
 test:
 	cargo test
 
-
+schema:
+	cargo run --package candle_auction --example gen
+	
 .PHONY: fmt check schema test
