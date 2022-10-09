@@ -1,18 +1,23 @@
 use cosmwasm_std::{
-    from_binary, to_binary, CosmosMsg, DepsMut, Env, MessageInfo, Response, Uint128, WasmMsg,
+    from_binary, to_binary, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, MessageInfo,
+    Response, StdResult, Uint128, WasmMsg, WasmQuery,
 };
 
-const DRAND_NEXT_ROUND_SECURITY: u64 = 10;
+use crate::error::ContractError;
+use crate::state::*;
+use cw20::Cw20ExecuteMsg;
+use cw721::Cw721ExecuteMsg;
 
+use crate::msg::{response, Auction as AuctionMsg, RandQueryMsg, TokenMsg};
+use crate::state::{AuctionStatus, AUCTIONS, CONFIG};
+
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+
+const DRAND_NEXT_ROUND_SECURITY: u64 = 10;
 pub mod execute {
     //{{{
     use super::*;
-    use crate::error::ContractError;
-    use crate::msg::{Auction as AuctionMsg, TokenMsg};
-    use crate::state::*;
-    use cosmwasm_std::{BankMsg, Binary, Coin};
-    use cw20::Cw20ExecuteMsg;
-    use cw721::Cw721ExecuteMsg::TransferNft;
 
     #[allow(clippy::too_many_arguments)]
     pub fn auction(
@@ -134,8 +139,6 @@ pub mod execute {
 
         Ok(Response::new())
     }
-
-    use cw721::Cw721ExecuteMsg;
 
     pub fn winner_claim(
         deps: DepsMut,
@@ -284,12 +287,6 @@ pub mod execute {
 
         Ok(Response::new().add_attribute("method", "handle_cw20_bid"))
     }
-
-    use super::DRAND_NEXT_ROUND_SECURITY;
-    use crate::msg::RandQueryMsg;
-    use cosmwasm_std::WasmQuery;
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
 
     pub fn blow_candle(
         deps: DepsMut,
@@ -454,7 +451,7 @@ pub mod execute {
 
         let mut msgs = vec![];
         for (addr, token_id) in auction.tokens.clone() {
-            let refund_token_msg = TransferNft {
+            let refund_token_msg = Cw721ExecuteMsg::TransferNft {
                 recipient: deps.api.addr_humanize(&auction.seller)?.to_string(),
                 token_id,
             };
@@ -477,11 +474,7 @@ pub mod execute {
 
 pub mod query {
     //{{{
-    use crate::msg::response;
-    use crate::state::{AuctionStatus, AUCTIONS, CONFIG};
-    use cosmwasm_std::Env;
-    use cosmwasm_std::{Deps, StdResult};
-
+    use super::*;
     pub fn config(deps: Deps) -> StdResult<response::Config> {
         let config = CONFIG.load(deps.storage)?;
         Ok(response::Config {
