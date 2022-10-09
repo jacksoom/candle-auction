@@ -215,6 +215,35 @@
         }
       },
       "additionalProperties": false
+    },
+    {
+      "description": "Bid for denom payment",
+      "type": "object",
+      "required": [
+        "BidForDenom"
+      ],
+      "properties": {
+        "BidForDenom": {
+          "type": "object",
+          "required": [
+            "auction_id"
+          ],
+          "properties": {
+            "auction_id": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "bidder": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "additionalProperties": false
     }
   ],
   "definitions": {

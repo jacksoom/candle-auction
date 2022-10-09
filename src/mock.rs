@@ -1,7 +1,7 @@
 use crate::msg::RandQueryMsg;
-use cosmwasm_std::SystemError;
-use cosmwasm_std::{from_binary, to_binary, ContractResult, SystemResult};
-use cosmwasm_std::{QuerierResult, WasmQuery};
+use cosmwasm_std::{
+    from_binary, to_binary, ContractResult, QuerierResult, SystemError, SystemResult, WasmQuery,
+};
 
 pub fn mock_query_handle(req: &WasmQuery) -> QuerierResult {
     match req {
