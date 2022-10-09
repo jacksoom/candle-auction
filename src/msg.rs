@@ -1,9 +1,10 @@
 use crate::state::{AuctionStatus, PaymentType};
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Binary, Uint128};
+use cosmwasm_std::{Addr, Binary, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+/// Auction init msg
 #[cw_serde]
 pub struct InstantiateMsg {
     pub min_auction_duration: u64,
@@ -15,6 +16,7 @@ pub struct InstantiateMsg {
     pub oracle_contract: String,
 }
 
+/// Auction warrper message
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct Auction {
@@ -104,9 +106,6 @@ pub enum TokenMsg {
 
 pub mod response {
     use super::*;
-    use cosmwasm_schema::cw_serde;
-    use cosmwasm_std::Addr;
-
     #[cw_serde]
     pub struct Config {
         pub auction_num: u64,
