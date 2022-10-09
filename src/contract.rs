@@ -1,14 +1,13 @@
 use crate::error::ContractError;
-use crate::handler::query;
 use crate::handler::*;
-use crate::msg::QueryMsg;
-use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg};
+use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 use crate::state::{Config, ContractVersion, CONFIG};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
 };
 use cw2::{get_contract_version, set_contract_version};
+
 const CONTRACT_NAME: &str = "crates.io:candle_auction";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 

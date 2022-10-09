@@ -1,18 +1,17 @@
+use crate::error::ContractError;
+use crate::msg::{response, Auction as AuctionMsg, RandQueryMsg, TokenMsg};
+use crate::state::*;
 use cosmwasm_std::{
     from_binary, to_binary, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, MessageInfo,
     Response, StdResult, Uint128, WasmMsg, WasmQuery,
 };
-
-use crate::error::ContractError;
-use crate::state::*;
 use cw20::Cw20ExecuteMsg;
 use cw721::Cw721ExecuteMsg;
 
-use crate::msg::{response, Auction as AuctionMsg, RandQueryMsg, TokenMsg};
-use crate::state::{AuctionStatus, AUCTIONS, CONFIG};
-
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
+
+use crate::state::{AuctionStatus, AUCTIONS, CONFIG};
 
 const DRAND_NEXT_ROUND_SECURITY: u64 = 10;
 pub mod execute {
@@ -475,6 +474,7 @@ pub mod execute {
 pub mod query {
     //{{{
     use super::*;
+
     pub fn config(deps: Deps) -> StdResult<response::Config> {
         let config = CONFIG.load(deps.storage)?;
         Ok(response::Config {
