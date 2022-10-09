@@ -1,4 +1,4 @@
-# 🕯️ Candle Auctions on Ink! 🎃
+# 🕯️ Candle Auctions on CosmWasm! 🎃
 This is an [CosmWasm](https://cosmwasm.com/) smartcontract implementing a [candle auction](https://en.wikipedia.org/wiki/Candle_auction) logic.
 
 With this contract, one can set up a candle auction for a **NFT collection** or a **domain name**!  
