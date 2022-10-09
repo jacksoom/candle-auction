@@ -323,6 +323,7 @@ pub mod execute {
 
         let mut bank_msgs = vec![];
         let mut cw20_refund_msg = vec![];
+        let mut winner_msg = vec![];
 
         let end_time = offset
             .checked_add(auction.start_timestmap)
@@ -333,6 +334,19 @@ pub mod execute {
         for (bidder, bid_time, amount) in auction.bidders.iter().rev() {
             if *bid_time <= end_time && auction.curr_winner.is_none() {
                 auction.curr_winner = Some((bidder.clone(), *bid_time, *amount));
+                // Transfer all nft
+                for token in auction.tokens.clone() {
+                    let transfer_nft_msg: CosmosMsg = CosmosMsg::Wasm(WasmMsg::Execute {
+                        contract_addr: token.0,
+                        msg: to_binary(&Cw721ExecuteMsg::TransferNft {
+                            recipient: bidder.clone(),
+                            token_id: token.1,
+                        })?,
+                        funds: vec![],
+                    });
+
+                    winner_msg.push(transfer_nft_msg);
+                }
                 continue;
             }
             // make
@@ -361,6 +375,35 @@ pub mod execute {
                 }
             }
         }
+        // made transfer payment to seller
+        if auction.curr_winner.is_some() {
+            let seller = deps.api.addr_humanize(&auction.seller)?.to_string();
+            let amount = auction.curr_winner.as_ref().unwrap().2;
+            match auction.payment_type {
+                PaymentType::Coin => {
+                    bank_msgs.push(BankMsg::Send {
+                        to_address: seller,
+                        amount: vec![Coin {
+                            denom: auction.payment.clone(),
+                            amount: Uint128::new(amount),
+                        }],
+                    });
+                }
+                PaymentType::Cw20 => {
+                    let refund_msg = Cw20ExecuteMsg::Transfer {
+                        recipient: seller,
+                        amount: Uint128::new(amount),
+                    };
+
+                    let msg: CosmosMsg = CosmosMsg::Wasm(WasmMsg::Execute {
+                        contract_addr: auction.payment.clone(),
+                        msg: to_binary(&refund_msg)?,
+                        funds: vec![],
+                    });
+                    cw20_refund_msg.push(msg);
+                }
+            }
+        }
 
         auction.is_candle_blow = true;
 
@@ -368,7 +411,8 @@ pub mod execute {
 
         Ok(Response::new()
             .add_messages(bank_msgs)
-            .add_messages(cw20_refund_msg))
+            .add_messages(cw20_refund_msg)
+            .add_messages(winner_msg))
     }
 
     pub fn receive(

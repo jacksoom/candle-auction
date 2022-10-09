@@ -54,6 +54,11 @@ pub enum ExecuteMsg {
     Receive(TokenMsg),
     /// auction flow refund
     FlowRefund { auction_id: u64 },
+    /// Bid for denom payment
+    BidForDenom {
+        bidder: Option<String>,
+        auction_id: u64,
+    },
 }
 
 #[cw_serde]

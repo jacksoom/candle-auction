@@ -166,10 +166,15 @@ mod tests {
         assert_eq!(res.attributes.len(), 1, "res.attributes is not expect");
     }
 
+    use crate::mock;
+    use cw20::Cw20ExecuteMsg;
+
     #[test]
-    fn test_auction_and_recv_cw721() {
+    fn test_auction() {
         let env = mock_env();
         let mut deps = mock_dependencies();
+        deps.querier.update_wasm(mock::mock_query_handle);
+
         let msg = InstantiateMsg {
             min_auction_duration: 0,
             max_auction_duration: 2 * 24 * 30 * 3600,
@@ -251,7 +256,8 @@ mod tests {
             amount: Uint128::new(400u128),
             msg: to_binary(&auction_msg).unwrap(),
         };
-
+        let mut env = mock_env();
+        env.block.time = Timestamp::from_seconds(1571797400 + 1000);
         let res = execute(
             deps.as_mut(),
             mock_env(),
@@ -271,7 +277,7 @@ mod tests {
         let mut end_env = mock_env();
         end_env.block.time = Timestamp::from_seconds(1571797400 + 100000000);
 
-        let res = execute(deps.as_mut(), end_env, info.clone(), claim_msg).unwrap();
+        let res = execute(deps.as_mut(), end_env.clone(), info.clone(), claim_msg).unwrap();
         assert_eq!(res.attributes.len(), 1, "attri error");
 
         let transfer_msg: CosmosMsg = CosmosMsg::Wasm(WasmMsg::Execute {
@@ -285,8 +291,46 @@ mod tests {
         });
 
         assert_eq!(res.messages[0].msg, transfer_msg, "made transfer");
-    }
 
-    #[test]
-    fn test_blow_candle() {}
+        let blow_candle = ExecuteMsg::BlowCandle { auction_id: 1 };
+
+        let res = execute(deps.as_mut(), end_env.clone(), info.clone(), blow_candle).unwrap();
+
+        // 1: bidder: bob is not a winner. make refund
+        // 2: seller: auction ended. alice recv the bid amount
+        // 3: keven: keven is winner. recv the cw721 token.
+        let refund_msg_2: CosmosMsg = CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: "cw20_contract_addr1".to_string(),
+            msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                recipient: "bob".to_string(),
+                amount: Uint128::new(300),
+            })
+            .unwrap(),
+            funds: vec![],
+        });
+
+        let recv_token_msg_3: CosmosMsg = CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: "cw20_contract_addr1".to_string(),
+            msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                recipient: "alice".to_string(),
+                amount: Uint128::new(400),
+            })
+            .unwrap(),
+            funds: vec![],
+        });
+
+        let cw721_transfer_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: "cw721_contract_addr".to_string(),
+            msg: to_binary(&Cw721ExecuteMsg::TransferNft {
+                recipient: "keven".to_string(),
+                token_id: "test_token".to_string(),
+            })
+            .unwrap(),
+            funds: vec![],
+        });
+        assert_eq!(res.messages.len(), 3, "Message length not eq 3");
+        assert_eq!(res.messages[0].msg, refund_msg_2, "refund msg");
+        assert_eq!(res.messages[1].msg, recv_token_msg_3, "recv token msg");
+        assert_eq!(res.messages[2].msg, cw721_transfer_msg, "cw721 transfer");
+    }
 }
