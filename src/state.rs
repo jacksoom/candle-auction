@@ -34,8 +34,8 @@ pub struct ContractVersion {
 }
 #[cw_serde]
 pub enum PaymentType {
-    Coin,
-    Cw20,
+    Coin = 0,
+    Cw20 = 1,
 }
 
 #[cw_serde]
@@ -57,7 +57,7 @@ pub struct Auction {
     /// Seller
     pub seller: CanonicalAddr,
     /// bid payment type.
-    pub payment_type: u8,
+    pub payment_type: PaymentType,
     /// bid payment value. denom/cw20 token address
     pub payment: String,
     /// Bid min price

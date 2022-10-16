@@ -27,7 +27,7 @@ pub mod execute {
         start_timestmap: u64,
         auction_duration: u64,
         tokens: Vec<(String, String)>,
-        payment_type: u8,
+        payment_type: PaymentType,
         payment: String,
         min_price: Option<u128>,
     ) -> Result<Response, ContractError> {
@@ -87,7 +87,11 @@ pub mod execute {
         let config = CONFIG.load(deps.storage)?;
         assert!(config.enable_auction, "Auction disabled");
         let mut auction = AUCTIONS.may_load(deps.storage, auction_id)?.unwrap();
-        assert_eq!(auction.payment_type, 0, "Unsupport coin bid");
+        assert_eq!(
+            auction.payment_type,
+            PaymentType::Coin,
+            "Unsupport coin bid"
+        );
         let now = env.block.time.seconds();
 
         if !auction.status(now).eq(&AuctionStatus::OpeningPeriod) {
@@ -342,7 +346,7 @@ pub mod execute {
             }
             // make
             match auction.payment_type {
-                0 => {
+                PaymentType::Coin => {
                     bank_msgs.push(BankMsg::Send {
                         to_address: bidder.clone(),
                         amount: vec![Coin {
@@ -351,7 +355,7 @@ pub mod execute {
                         }],
                     });
                 }
-                1 => {
+                PaymentType::Cw20 => {
                     let refund_msg = Cw20ExecuteMsg::Transfer {
                         recipient: bidder.clone(),
                         amount: Uint128::new(*amount),
@@ -364,9 +368,6 @@ pub mod execute {
                     });
                     cw20_refund_msg.push(msg);
                 }
-                _ => {
-                    unreachable!()
-                }
             }
         }
         // made transfer payment to seller
@@ -374,7 +375,7 @@ pub mod execute {
             let seller = deps.api.addr_humanize(&auction.seller)?.to_string();
             let amount = auction.curr_winner.as_ref().unwrap().2;
             match auction.payment_type {
-                0 => {
+                PaymentType::Coin => {
                     bank_msgs.push(BankMsg::Send {
                         to_address: seller,
                         amount: vec![Coin {
@@ -383,7 +384,7 @@ pub mod execute {
                         }],
                     });
                 }
-                1 => {
+                PaymentType::Cw20 => {
                     let refund_msg = Cw20ExecuteMsg::Transfer {
                         recipient: seller,
                         amount: Uint128::new(amount),
@@ -395,9 +396,6 @@ pub mod execute {
                         funds: vec![],
                     });
                     cw20_refund_msg.push(msg);
-                }
-                _ => {
-                    unreachable!()
                 }
             }
         }

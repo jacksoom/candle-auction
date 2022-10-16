@@ -96,9 +96,6 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
             page,
             limit,
         } => to_binary(&query::auction_list(deps, env, status, page, limit)?),
-        _ => {
-            unreachable!()
-        }
     }
 }
 
