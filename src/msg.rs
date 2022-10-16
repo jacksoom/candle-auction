@@ -5,7 +5,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// Auction init msg
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct InstantiateMsg {
     pub min_auction_duration: u64,
     pub max_auction_duration: u64,
@@ -101,7 +102,8 @@ pub struct ReceiveMsg {
 
 pub mod response {
     use super::*;
-    #[cw_serde]
+    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+    #[serde(rename_all = "snake_case")]
     pub struct Config {
         pub auction_num: u64,
         pub min_auction_duration: u64,
@@ -112,7 +114,8 @@ pub mod response {
         pub support_contract: Vec<String>,
     }
 
-    #[cw_serde]
+    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+    #[serde(rename_all = "snake_case")]
     pub struct Auction {
         pub name: String,
         pub start_timestmap: u64,

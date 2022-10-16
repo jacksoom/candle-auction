@@ -1,4 +1,3 @@
-use cosmwasm_schema::cw_serde;
 use cosmwasm_std::CanonicalAddr;
 use cw_storage_plus::{Item, Map};
 use schemars::JsonSchema;
@@ -32,13 +31,16 @@ pub struct ContractVersion {
     /// migrate from the given contract (and is tied to it's implementation somehow)
     pub version: String,
 }
-#[cw_serde]
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum PaymentType {
     Coin = 0,
     Cw20 = 1,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct Auction {
     /// The name of the auction item
     pub name: String,
