@@ -53,7 +53,7 @@ pub enum ExecuteMsg {
     /// Candle blow
     BlowCandle { auction_id: u64 },
     /// Receive interface
-    // Receive(TokenMsg),
+    Receive(TokenMsg),
     /// auction flow refund
     FlowRefund { auction_id: u64 },
     /// Bid for denom payment

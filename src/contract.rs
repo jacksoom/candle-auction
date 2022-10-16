@@ -73,7 +73,7 @@ pub fn execute(
             payment,
             min_price,
         ),
-        //  ExecuteMsg::Receive(msg) => execute::receive(deps, env, info, msg),
+        ExecuteMsg::Receive(msg) => execute::receive(deps, env, info, msg),
         ExecuteMsg::WinnerClaim { auction_id, winner } => {
             execute::winner_claim(deps, env, info, auction_id, winner)
         }
