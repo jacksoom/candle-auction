@@ -90,7 +90,6 @@ pub struct GetResponse {
 }
 
 #[cw_serde]
-#[serde(untagged)]
 pub enum TokenMsg {
     Cw20ReceiveMsg {
         sender: String,
