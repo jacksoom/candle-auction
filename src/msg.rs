@@ -69,7 +69,7 @@ pub enum QueryMsg {
     Config {},
     /// Get Auction list
     AuctionList {
-        status: Option<u8>,
+        status: Option<AuctionStatus>,
         page: u32,
         limit: u32,
     },

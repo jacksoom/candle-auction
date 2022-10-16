@@ -105,9 +105,9 @@ impl Auction {
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, JsonSchema, Debug)]
 pub enum AuctionStatus {
     /// An auction has not started yet.
-    NotStarted,
+    NotStarted = 0,
     /// We are in the starting period of the auction, collecting initial bids.
-    OpeningPeriod,
+    OpeningPeriod = 1,
     /// Candle was blown
-    Ended,
+    Ended = 2,
 }
