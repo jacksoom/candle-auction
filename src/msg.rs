@@ -17,6 +17,7 @@ pub struct InstantiateMsg {
 }
 
 /// Auction warrper message
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct Auction {
@@ -24,7 +25,7 @@ pub struct Auction {
     pub bidder: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[cw_serde]
 pub enum ExecuteMsg {
     // /// Post a new auction
     Auction {
@@ -77,19 +78,20 @@ pub enum QueryMsg {
     Auction { id: u64 },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum RandQueryMsg {
     Get { round: u64 },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct GetResponse {
     /// The randomness if available. When the beacon does not exist, this is an empty value.
     pub randomness: Binary,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct ReceiveMsg {
     pub sender: String,
     pub amount: Option<Uint128>,
@@ -126,5 +128,5 @@ pub mod response {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[cw_serde]
 pub struct MigrateMsg {}
