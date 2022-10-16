@@ -26,7 +26,7 @@ pub struct Auction {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum ExecuteMsg {
-    /// Post a new auction
+    // /// Post a new auction
     Auction {
         name: String,
         start_timestmap: u64,
@@ -53,7 +53,7 @@ pub enum ExecuteMsg {
     /// Candle blow
     BlowCandle { auction_id: u64 },
     /// Receive interface
-    Receive(TokenMsg),
+    Receive(ReceiveMsg),
     /// auction flow refund
     FlowRefund { auction_id: u64 },
     /// Bid for denom payment
@@ -90,18 +90,11 @@ pub struct GetResponse {
 }
 
 #[cw_serde]
-#[serde(untagged)]
-pub enum TokenMsg {
-    Cw20ReceiveMsg {
-        sender: String,
-        amount: Uint128,
-        msg: Binary,
-    },
-    Cw721ReceiveMsg {
-        sender: String,
-        token_id: String,
-        msg: Binary,
-    },
+pub struct ReceiveMsg {
+    pub sender: String,
+    pub amount: Option<Uint128>,
+    pub token_id: Option<String>,
+    pub msg: Binary,
 }
 
 pub mod response {

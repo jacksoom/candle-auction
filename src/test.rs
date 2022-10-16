@@ -51,7 +51,7 @@ mod tests {
             start_timestmap: 1664805457,
             duration: 2 * 30 * 24 * 3600,
             tokens: vec![],
-            payment_type: PaymentType::Coin,
+            payment_type: PaymentType::Cw20,
             payment: "ugtb".to_string(),
             min_price: Some(123),
         };
@@ -126,9 +126,10 @@ mod tests {
             bidder: None,
         };
 
-        let token_msg = TokenMsg::Cw20ReceiveMsg {
+        let token_msg = ReceiveMsg {
             sender: "admin1".to_string(),
-            amount: Uint128::new(200u128),
+            amount: Some(Uint128::new(200u128)),
+            token_id: None,
             msg: to_binary(&auction_msg).unwrap(),
         };
 
@@ -149,9 +150,10 @@ mod tests {
             bidder: None,
         };
 
-        let token_msg = TokenMsg::Cw20ReceiveMsg {
+        let token_msg = ReceiveMsg {
             sender: "admin2".to_string(),
-            amount: Uint128::new(300u128),
+            amount: Some(Uint128::new(300u128)),
+            token_id: None,
             msg: to_binary(&auction_msg).unwrap(),
         };
 
@@ -208,9 +210,10 @@ mod tests {
             bidder: None,
         };
 
-        let token_msg = TokenMsg::Cw721ReceiveMsg {
+        let token_msg = ReceiveMsg {
             sender: "alice".to_string(),
-            token_id: "test_token".to_string(),
+            token_id: Some("test_token".to_string()),
+            amount: None,
             msg: to_binary(&auction_msg).unwrap(),
         };
 
@@ -235,9 +238,10 @@ mod tests {
 
         info.sender = Addr::unchecked("cw20_contract_addr1");
 
-        let token_msg1 = TokenMsg::Cw20ReceiveMsg {
+        let token_msg1 = ReceiveMsg {
             sender: "bob".to_string(),
-            amount: Uint128::new(300u128),
+            amount: Some(Uint128::new(300u128)),
+            token_id: None,
             msg: to_binary(&auction_msg).unwrap(),
         };
 
@@ -251,9 +255,10 @@ mod tests {
 
         assert!(res.attributes.len() == 1, "attri");
 
-        let token_msg2 = TokenMsg::Cw20ReceiveMsg {
+        let token_msg2 = ReceiveMsg {
             sender: "keven".to_string(),
-            amount: Uint128::new(400u128),
+            amount: Some(Uint128::new(400u128)),
+            token_id: None,
             msg: to_binary(&auction_msg).unwrap(),
         };
         let mut env = mock_env();

@@ -1,5 +1,5 @@
 use crate::error::ContractError;
-use crate::msg::{response, Auction as AuctionMsg, RandQueryMsg, TokenMsg};
+use crate::msg::{response, Auction as AuctionMsg, RandQueryMsg, ReceiveMsg};
 use crate::state::*;
 use cosmwasm_std::{
     from_binary, to_binary, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, MessageInfo,
@@ -249,7 +249,6 @@ pub mod execute {
 
         let now = env.block.time.seconds();
 
-        if !info.sender.to_string().eq(&auction.payment) {}
         assert_eq!(
             info.sender.to_string(),
             auction.payment,
@@ -261,11 +260,11 @@ pub mod execute {
             "Cannot bid right now"
         );
 
-        assert_eq!(
-            auction.payment_type,
-            PaymentType::Cw20,
-            "Unsupport cw20 bid payment"
-        );
+        // assert_eq!(
+        //     auction.payment_type,
+        //     PaymentType::Cw20,
+        //     "Unsupport cw20 bid payment"
+        // );
 
         let min_price = auction.bid_min_price();
 
@@ -415,19 +414,11 @@ pub mod execute {
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        cw20_msg: TokenMsg,
+        msg: ReceiveMsg,
     ) -> Result<Response, ContractError> {
-        match cw20_msg {
-            TokenMsg::Cw20ReceiveMsg {
-                sender,
-                amount,
-                msg,
-            } => handle_cw20_bid(deps, env, info, sender, amount, msg),
-            TokenMsg::Cw721ReceiveMsg {
-                sender,
-                token_id,
-                msg,
-            } => handle_cw721(deps, info, env, sender, token_id, msg),
+        match msg.amount {
+            Some(amount) => handle_cw20_bid(deps, env, info, msg.sender, amount, msg.msg),
+            None => handle_cw721(deps, info, env, msg.sender, msg.token_id.unwrap(), msg.msg),
         }
     }
 
