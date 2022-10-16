@@ -91,11 +91,14 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&query::config(deps)?),
         QueryMsg::Auction { id } => to_binary(&query::auction(deps, id)?),
-        QueryMsg::AuctionList {
-            status,
-            page,
-            limit,
-        } => to_binary(&query::auction_list(deps, env, status, page, limit)?),
+        // QueryMsg::AuctionList {
+        //     status,
+        //     page,
+        //     limit,
+        // } => to_binary(&query::auction_list(deps, env, status, page, limit)?),
+        _ => {
+            unreachable!()
+        }
     }
 }
 
