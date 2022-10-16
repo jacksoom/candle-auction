@@ -36,24 +36,24 @@ pub enum ExecuteMsg {
     //     payment: String,
     //     min_price: Option<u128>,
     // },
-    // /// Winner claim the reward
-    // WinnerClaim {
-    //     auction_id: u64,
-    //     winner: Option<String>,
-    // },
-    // /// Update Config
-    // UpdateConfig {
-    //     min_auction_duration: Option<u64>,
-    //     max_auction_duration: Option<u64>,
-    //     enable_auction: Option<bool>,
-    //     fee_rate: Option<u64>,
-    //     default_denom: Option<String>,
-    //     support_contract: Option<Vec<String>>,
-    // },
+    /// Winner claim the reward
+    WinnerClaim {
+        auction_id: u64,
+        winner: Option<String>,
+    },
+    /// Update Config
+    UpdateConfig {
+        min_auction_duration: Option<u64>,
+        max_auction_duration: Option<u64>,
+        enable_auction: Option<bool>,
+        fee_rate: Option<u64>,
+        default_denom: Option<String>,
+        support_contract: Option<Vec<String>>,
+    },
     /// Candle blow
     BlowCandle { auction_id: u64 },
     /// Receive interface
-    // Receive(TokenMsg),
+    Receive(TokenMsg),
     /// auction flow refund
     FlowRefund { auction_id: u64 },
     /// Bid for denom payment

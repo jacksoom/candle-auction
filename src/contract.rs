@@ -73,10 +73,10 @@ pub fn execute(
         //     payment,
         //     min_price,
         // ),
-        // ExecuteMsg::Receive(msg) => execute::receive(deps, env, info, msg),
-        // ExecuteMsg::WinnerClaim { auction_id, winner } => {
-        //     execute::winner_claim(deps, env, info, auction_id, winner)
-        // }
+        ExecuteMsg::Receive(msg) => execute::receive(deps, env, info, msg),
+        ExecuteMsg::WinnerClaim { auction_id, winner } => {
+            execute::winner_claim(deps, env, info, auction_id, winner)
+        }
         ExecuteMsg::BlowCandle { auction_id } => execute::blow_candle(deps, env, auction_id),
         ExecuteMsg::FlowRefund { auction_id } => execute::auction_flow(deps, env, auction_id),
         ExecuteMsg::BidForDenom { bidder, auction_id } => {
