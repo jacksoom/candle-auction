@@ -39,12 +39,6 @@ pub mod execute {
             });
         }
 
-        let payment_type = if payment_type == 0 {
-            PaymentType::Coin
-        } else {
-            PaymentType::Cw20
-        };
-
         // TODO
         // auction params precheck
         // check contract has been received those tokens
@@ -93,11 +87,7 @@ pub mod execute {
         let config = CONFIG.load(deps.storage)?;
         assert!(config.enable_auction, "Auction disabled");
         let mut auction = AUCTIONS.may_load(deps.storage, auction_id)?.unwrap();
-        assert_eq!(
-            auction.payment_type,
-            PaymentType::Coin,
-            "Unsupport coin bid"
-        );
+        assert_eq!(auction.payment_type, 0, "Unsupport coin bid");
         let now = env.block.time.seconds();
 
         if !auction.status(now).eq(&AuctionStatus::OpeningPeriod) {
@@ -267,11 +257,11 @@ pub mod execute {
             "Cannot bid right now"
         );
 
-        assert_eq!(
-            auction.payment_type,
-            PaymentType::Cw20,
-            "Unsupport cw20 bid payment"
-        );
+        // assert_eq!(
+        //     auction.payment_type,
+        //     PaymentType::Cw20,
+        //     "Unsupport cw20 bid payment"
+        // );
 
         let min_price = auction.bid_min_price();
 
@@ -353,7 +343,7 @@ pub mod execute {
             }
             // make
             match auction.payment_type {
-                PaymentType::Coin => {
+                0 => {
                     bank_msgs.push(BankMsg::Send {
                         to_address: bidder.clone(),
                         amount: vec![Coin {
@@ -362,7 +352,7 @@ pub mod execute {
                         }],
                     });
                 }
-                PaymentType::Cw20 => {
+                1 => {
                     let refund_msg = Cw20ExecuteMsg::Transfer {
                         recipient: bidder.clone(),
                         amount: Uint128::new(*amount),
@@ -375,6 +365,9 @@ pub mod execute {
                     });
                     cw20_refund_msg.push(msg);
                 }
+                _ => {
+                    unreachable!()
+                }
             }
         }
         // made transfer payment to seller
@@ -382,7 +375,7 @@ pub mod execute {
             let seller = deps.api.addr_humanize(&auction.seller)?.to_string();
             let amount = auction.curr_winner.as_ref().unwrap().2;
             match auction.payment_type {
-                PaymentType::Coin => {
+                0 => {
                     bank_msgs.push(BankMsg::Send {
                         to_address: seller,
                         amount: vec![Coin {
@@ -391,7 +384,7 @@ pub mod execute {
                         }],
                     });
                 }
-                PaymentType::Cw20 => {
+                1 => {
                     let refund_msg = Cw20ExecuteMsg::Transfer {
                         recipient: seller,
                         amount: Uint128::new(amount),
@@ -403,6 +396,9 @@ pub mod execute {
                         funds: vec![],
                     });
                     cw20_refund_msg.push(msg);
+                }
+                _ => {
+                    unreachable!()
                 }
             }
         }

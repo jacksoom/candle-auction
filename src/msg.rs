@@ -126,7 +126,7 @@ pub mod response {
         pub curr_winner: Option<(String, u64, u128)>,
         pub tokens: Vec<(String, String)>,
         pub seller: Addr,
-        pub payment_type: PaymentType,
+        pub payment_type: u8,
         pub payment: String,
         pub min_price: Option<u128>,
         pub bid_num: u32,

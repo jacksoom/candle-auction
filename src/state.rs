@@ -57,7 +57,7 @@ pub struct Auction {
     /// Seller
     pub seller: CanonicalAddr,
     /// bid payment type.
-    pub payment_type: PaymentType,
+    pub payment_type: u8,
     /// bid payment value. denom/cw20 token address
     pub payment: String,
     /// Bid min price
