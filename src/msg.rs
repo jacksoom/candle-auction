@@ -50,17 +50,17 @@ pub enum ExecuteMsg {
     //     default_denom: Option<String>,
     //     support_contract: Option<Vec<String>>,
     // },
-    // /// Candle blow
-    // BlowCandle { auction_id: u64 },
-    // /// Receive interface
+    /// Candle blow
+    BlowCandle { auction_id: u64 },
+    /// Receive interface
     // Receive(TokenMsg),
-    // /// auction flow refund
-    // FlowRefund { auction_id: u64 },
-    // /// Bid for denom payment
-    // BidForDenom {
-    //     bidder: Option<String>,
-    //     auction_id: u64,
-    // },
+    /// auction flow refund
+    FlowRefund { auction_id: u64 },
+    /// Bid for denom payment
+    BidForDenom {
+        bidder: Option<String>,
+        auction_id: u64,
+    },
 }
 
 #[cw_serde]

@@ -77,11 +77,11 @@ pub fn execute(
         // ExecuteMsg::WinnerClaim { auction_id, winner } => {
         //     execute::winner_claim(deps, env, info, auction_id, winner)
         // }
-        // ExecuteMsg::BlowCandle { auction_id } => execute::blow_candle(deps, env, auction_id),
-        // ExecuteMsg::FlowRefund { auction_id } => execute::auction_flow(deps, env, auction_id),
-        // ExecuteMsg::BidForDenom { bidder, auction_id } => {
-        //     execute::bid_for_denom(deps, env, info, bidder, auction_id)
-        // }
+        ExecuteMsg::BlowCandle { auction_id } => execute::blow_candle(deps, env, auction_id),
+        ExecuteMsg::FlowRefund { auction_id } => execute::auction_flow(deps, env, auction_id),
+        ExecuteMsg::BidForDenom { bidder, auction_id } => {
+            execute::bid_for_denom(deps, env, info, bidder, auction_id)
+        }
         _ => Err(ContractError::InvalidName {}),
     }
 }
