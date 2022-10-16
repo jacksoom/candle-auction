@@ -26,41 +26,41 @@ pub struct Auction {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum ExecuteMsg {
-    /// Post a new auction
-    Auction {
-        name: String,
-        start_timestmap: u64,
-        duration: u64,
-        tokens: Vec<(String, String)>,
-        payment_type: u8,
-        payment: String,
-        min_price: Option<u128>,
-    },
-    /// Winner claim the reward
-    WinnerClaim {
-        auction_id: u64,
-        winner: Option<String>,
-    },
-    /// Update Config
-    UpdateConfig {
-        min_auction_duration: Option<u64>,
-        max_auction_duration: Option<u64>,
-        enable_auction: Option<bool>,
-        fee_rate: Option<u64>,
-        default_denom: Option<String>,
-        support_contract: Option<Vec<String>>,
-    },
-    /// Candle blow
-    BlowCandle { auction_id: u64 },
-    /// Receive interface
-    Receive(TokenMsg),
-    /// auction flow refund
-    FlowRefund { auction_id: u64 },
-    /// Bid for denom payment
-    BidForDenom {
-        bidder: Option<String>,
-        auction_id: u64,
-    },
+    // /// Post a new auction
+    // Auction {
+    //     name: String,
+    //     start_timestmap: u64,
+    //     duration: u64,
+    //     tokens: Vec<(String, String)>,
+    //     payment_type: u8,
+    //     payment: String,
+    //     min_price: Option<u128>,
+    // },
+    // /// Winner claim the reward
+    // WinnerClaim {
+    //     auction_id: u64,
+    //     winner: Option<String>,
+    // },
+    // /// Update Config
+    // UpdateConfig {
+    //     min_auction_duration: Option<u64>,
+    //     max_auction_duration: Option<u64>,
+    //     enable_auction: Option<bool>,
+    //     fee_rate: Option<u64>,
+    //     default_denom: Option<String>,
+    //     support_contract: Option<Vec<String>>,
+    // },
+    // /// Candle blow
+    // BlowCandle { auction_id: u64 },
+    // /// Receive interface
+    // Receive(TokenMsg),
+    // /// auction flow refund
+    // FlowRefund { auction_id: u64 },
+    // /// Bid for denom payment
+    // BidForDenom {
+    //     bidder: Option<String>,
+    //     auction_id: u64,
+    // },
 }
 
 #[cw_serde]
