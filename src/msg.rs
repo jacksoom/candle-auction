@@ -27,15 +27,15 @@ pub struct Auction {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum ExecuteMsg {
     // /// Post a new auction
-    // Auction {
-    //     name: String,
-    //     start_timestmap: u64,
-    //     duration: u64,
-    //     tokens: Vec<(String, String)>,
-    //     payment_type: u8,
-    //     payment: String,
-    //     min_price: Option<u128>,
-    // },
+    Auction {
+        name: String,
+        start_timestmap: u64,
+        duration: u64,
+        tokens: Vec<(String, String)>,
+        payment_type: u8,
+        payment: String,
+        min_price: Option<u128>,
+    },
     /// Winner claim the reward
     WinnerClaim {
         auction_id: u64,
@@ -53,7 +53,7 @@ pub enum ExecuteMsg {
     /// Candle blow
     BlowCandle { auction_id: u64 },
     /// Receive interface
-    Receive(TokenMsg),
+    // Receive(TokenMsg),
     /// auction flow refund
     FlowRefund { auction_id: u64 },
     /// Bid for denom payment

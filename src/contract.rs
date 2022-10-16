@@ -53,27 +53,27 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        // ExecuteMsg::Auction {
-        //     name,
-        //     start_timestmap,
-        //     duration,
-        //     tokens,
-        //     payment_type,
-        //     payment,
-        //     min_price,
-        // } => execute::auction(
-        //     deps,
-        //     env,
-        //     info,
-        //     name,
-        //     start_timestmap,
-        //     duration,
-        //     tokens,
-        //     payment_type,
-        //     payment,
-        //     min_price,
-        // ),
-        ExecuteMsg::Receive(msg) => execute::receive(deps, env, info, msg),
+        ExecuteMsg::Auction {
+            name,
+            start_timestmap,
+            duration,
+            tokens,
+            payment_type,
+            payment,
+            min_price,
+        } => execute::auction(
+            deps,
+            env,
+            info,
+            name,
+            start_timestmap,
+            duration,
+            tokens,
+            payment_type,
+            payment,
+            min_price,
+        ),
+        //  ExecuteMsg::Receive(msg) => execute::receive(deps, env, info, msg),
         ExecuteMsg::WinnerClaim { auction_id, winner } => {
             execute::winner_claim(deps, env, info, auction_id, winner)
         }
