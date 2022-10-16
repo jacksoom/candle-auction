@@ -27,7 +27,7 @@ pub mod execute {
         start_timestmap: u64,
         auction_duration: u64,
         tokens: Vec<(String, String)>,
-        payment_type: PaymentType,
+        payment_type: u8,
         payment: String,
         min_price: Option<u128>,
     ) -> Result<Response, ContractError> {
@@ -38,6 +38,12 @@ pub mod execute {
                 msg: "Bad timestamp setting".to_string(),
             });
         }
+
+        let payment_type = if payment_type == 0 {
+            PaymentType::Coin
+        } else {
+            PaymentType::Cw20
+        };
 
         // TODO
         // auction params precheck

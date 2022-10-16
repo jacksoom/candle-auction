@@ -32,7 +32,7 @@ pub enum ExecuteMsg {
         start_timestmap: u64,
         duration: u64,
         tokens: Vec<(String, String)>,
-        payment_type: PaymentType,
+        payment_type: u8,
         payment: String,
         min_price: Option<u128>,
     },

@@ -51,7 +51,7 @@ mod tests {
             start_timestmap: 1664805457,
             duration: 2 * 30 * 24 * 3600,
             tokens: vec![],
-            payment_type: PaymentType::Coin,
+            payment_type: 1,
             payment: "ugtb".to_string(),
             min_price: Some(123),
         };
@@ -113,7 +113,7 @@ mod tests {
             start_timestmap: 1571797400,
             duration: 2 * 30 * 24 * 3600,
             tokens: vec![],
-            payment_type: PaymentType::Cw20,
+            payment_type: 1,
             payment: "cw20_contract_addr1".to_string(),
             min_price: Some(123),
         };
@@ -196,7 +196,7 @@ mod tests {
             start_timestmap: 1571797400,
             duration: 2 * 30 * 24 * 3600,
             tokens: vec![],
-            payment_type: PaymentType::Cw20,
+            payment_type: 1,
             payment: "cw20_contract_addr1".to_string(),
             min_price: Some(123),
         };
