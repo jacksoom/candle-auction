@@ -1,7 +1,7 @@
 mod tests {
-    use crate::contract::execute;
+    use crate::contract::{execute, query};
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::Attribute;
+    use cosmwasm_std::{from_binary, Attribute};
 
     use crate::msg::*;
 
@@ -50,7 +50,6 @@ mod tests {
             name: "test_auction_1".to_string(),
             start_timestmap: 1664805457,
             duration: 2 * 30 * 24 * 3600,
-            tokens: vec![],
             payment_type: PaymentType::Cw20,
             payment: "ugtb".to_string(),
             min_price: Some(123),
@@ -89,6 +88,7 @@ mod tests {
         ];
 
         assert_eq!(res.attributes, attris, "failed");
+
         // TODO:add query check
     }
 
@@ -112,7 +112,6 @@ mod tests {
             name: "test_auction_1".to_string(),
             start_timestmap: 1571797400,
             duration: 2 * 30 * 24 * 3600,
-            tokens: vec![],
             payment_type: PaymentType::Cw20,
             payment: "cw20_contract_addr1".to_string(),
             min_price: Some(123),
@@ -122,7 +121,7 @@ mod tests {
 
         // First auction bid success
         let auction_msg = Auction {
-            id: 1,
+            id: 0,
             bidder: None,
         };
 
@@ -146,7 +145,7 @@ mod tests {
 
         // Second auction success and the first auction bid will be refund
         let auction_msg = Auction {
-            id: 1,
+            id: 0,
             bidder: None,
         };
 
@@ -197,7 +196,6 @@ mod tests {
             name: "test_auction_1".to_string(),
             start_timestmap: 1571797400,
             duration: 2 * 30 * 24 * 3600,
-            tokens: vec![],
             payment_type: PaymentType::Cw20,
             payment: "cw20_contract_addr1".to_string(),
             min_price: Some(123),
@@ -205,8 +203,22 @@ mod tests {
 
         execute(deps.as_mut(), mock_env(), info.clone(), post_auction_msg).unwrap();
 
+        // query
+        let res = query(
+            deps.as_ref(),
+            mock_env(),
+            QueryMsg::AuctionList {
+                status: None,
+                page: 0,
+                limit: 10,
+            },
+        )
+        .unwrap();
+        let auction_resp: Option<Vec<response::Auction>> = from_binary(&res).unwrap();
+        assert_eq!(auction_resp.unwrap().len(), 1, "aution list");
+
         let auction_msg = Auction {
-            id: 1,
+            id: 0,
             bidder: None,
         };
 
@@ -232,7 +244,7 @@ mod tests {
 
         // Second auction success and the first auction bid will be refund
         let auction_msg = Auction {
-            id: 1,
+            id: 0,
             bidder: None,
         };
 
@@ -275,7 +287,7 @@ mod tests {
 
         // Keven reclaim winner tokens
         let claim_msg = ExecuteMsg::WinnerClaim {
-            auction_id: 1,
+            auction_id: 0,
             winner: Some("keven".to_string()),
         };
 
@@ -297,7 +309,7 @@ mod tests {
 
         assert_eq!(res.messages[0].msg, transfer_msg, "made transfer");
 
-        let blow_candle = ExecuteMsg::BlowCandle { auction_id: 1 };
+        let blow_candle = ExecuteMsg::BlowCandle { auction_id: 0 };
 
         let res = execute(deps.as_mut(), end_env.clone(), info.clone(), blow_candle).unwrap();
 

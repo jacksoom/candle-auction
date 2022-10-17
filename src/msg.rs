@@ -33,7 +33,6 @@ pub enum ExecuteMsg {
         name: String,
         start_timestmap: u64,
         duration: u64,
-        tokens: Vec<(String, String)>,
         payment_type: PaymentType,
         payment: String,
         min_price: Option<u128>,
@@ -118,7 +117,7 @@ pub mod response {
     #[serde(rename_all = "snake_case")]
     pub struct Auction {
         pub name: String,
-        pub start_timestmap: u64,
+        pub start_timestamp: u64,
         pub auction_duration: u64,
         pub bidders: Vec<(String, u64, u128)>,
         pub curr_winner: Option<(String, u64, u128)>,

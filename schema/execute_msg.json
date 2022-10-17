@@ -15,8 +15,7 @@
             "name",
             "payment",
             "payment_type",
-            "start_timestmap",
-            "tokens"
+            "start_timestmap"
           ],
           "properties": {
             "duration": {
@@ -45,22 +44,6 @@
               "type": "integer",
               "format": "uint64",
               "minimum": 0.0
-            },
-            "tokens": {
-              "type": "array",
-              "items": {
-                "type": "array",
-                "items": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "maxItems": 2,
-                "minItems": 2
-              }
             }
           },
           "additionalProperties": false
