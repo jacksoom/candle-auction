@@ -10,7 +10,7 @@
     "payment",
     "payment_type",
     "seller",
-    "start_timestmap",
+    "start_timestamp",
     "tokens"
   ],
   "properties": {
@@ -90,7 +90,7 @@
     "seller": {
       "$ref": "#/definitions/Addr"
     },
-    "start_timestmap": {
+    "start_timestamp": {
       "type": "integer",
       "format": "uint64",
       "minimum": 0.0

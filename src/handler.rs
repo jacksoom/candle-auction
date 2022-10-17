@@ -26,7 +26,6 @@ pub mod execute {
         name: String,
         start_timestmap: u64,
         auction_duration: u64,
-        tokens: Vec<(String, String)>,
         payment_type: PaymentType,
         payment: String,
         min_price: Option<u128>,
@@ -48,7 +47,7 @@ pub mod execute {
             auction_duration,
             bidders: vec![],
             curr_winner: None,
-            tokens,
+            tokens: vec![],
             seller: deps.api.addr_canonicalize(info.sender.as_str())?,
             payment_type,
             payment,
@@ -57,9 +56,7 @@ pub mod execute {
             is_candle_blow: false,
         };
 
-        let auction_id = config.auction_num + 1;
-
-        AUCTIONS.save(deps.storage, auction_id, &auction)?;
+        AUCTIONS.save(deps.storage, config.auction_num, &auction)?;
 
         config.auction_num += 1;
         CONFIG.save(deps.storage, &config)?;
@@ -502,7 +499,7 @@ pub mod query {
             if count >= start_amount {
                 res.push(response::Auction {
                     name: auction.name,
-                    start_timestmap: auction.start_timestmap,
+                    start_timestamp: auction.start_timestmap,
                     auction_duration: auction.auction_duration,
                     bidders: auction.bidders,
                     curr_winner: auction.curr_winner,
@@ -530,7 +527,7 @@ pub mod query {
         match auction_res {
             Ok(auction) => Ok(Some(response::Auction {
                 name: auction.name,
-                start_timestmap: auction.start_timestmap,
+                start_timestamp: auction.start_timestmap,
                 auction_duration: auction.auction_duration,
                 bidders: auction.bidders,
                 curr_winner: auction.curr_winner,
