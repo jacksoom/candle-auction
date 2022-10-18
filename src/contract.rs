@@ -57,7 +57,7 @@ pub fn execute(
     match msg {
         ExecuteMsg::Auction {
             name,
-            start_timestmap,
+            start_timestamp,
             duration,
             payment_type,
             payment,
@@ -67,7 +67,7 @@ pub fn execute(
             env,
             info,
             name,
-            start_timestmap,
+            start_timestamp,
             duration,
             payment_type,
             payment,

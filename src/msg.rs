@@ -31,7 +31,7 @@ pub enum ExecuteMsg {
     // /// Post a new auction
     Auction {
         name: String,
-        start_timestmap: u64,
+        start_timestamp: u64,
         duration: u64,
         payment_type: PaymentType,
         payment: String,

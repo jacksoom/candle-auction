@@ -48,7 +48,7 @@ mod tests {
 
         let auction_msg = ExecuteMsg::Auction {
             name: "test_auction_1".to_string(),
-            start_timestmap: 1664805457,
+            start_timestamp: 1664805457,
             duration: 2 * 30 * 24 * 3600,
             payment_type: PaymentType::Cw20,
             payment: "ugtb".to_string(),
@@ -110,7 +110,7 @@ mod tests {
 
         let post_auction_msg = ExecuteMsg::Auction {
             name: "test_auction_1".to_string(),
-            start_timestmap: 1571797400,
+            start_timestamp: 1571797400,
             duration: 2 * 30 * 24 * 3600,
             payment_type: PaymentType::Cw20,
             payment: "cw20_contract_addr1".to_string(),
@@ -194,7 +194,7 @@ mod tests {
 
         let post_auction_msg = ExecuteMsg::Auction {
             name: "test_auction_1".to_string(),
-            start_timestmap: 1571797400,
+            start_timestamp: 1571797400,
             duration: 2 * 30 * 24 * 3600,
             payment_type: PaymentType::Cw20,
             payment: "cw20_contract_addr1".to_string(),
