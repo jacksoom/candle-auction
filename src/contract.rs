@@ -73,7 +73,8 @@ pub fn execute(
             payment,
             min_price,
         ),
-        ExecuteMsg::Receive(msg) => execute::receive(deps, env, info, msg),
+        ExecuteMsg::Receive(msg) => execute::receive_cw20(deps, env, info, msg),
+        ExecuteMsg::ReceiveNft(msg) => execute::receive_cw721(deps, env, info, msg),
         ExecuteMsg::WinnerClaim { auction_id, winner } => {
             execute::winner_claim(deps, env, info, auction_id, winner)
         }

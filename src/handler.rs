@@ -1,5 +1,5 @@
 use crate::error::ContractError;
-use crate::msg::{response, Auction as AuctionMsg, RandQueryMsg, ReceiveMsg};
+use crate::msg::{response, Auction as AuctionMsg, RandQueryMsg};
 use crate::state::*;
 use cosmwasm_std::{
     from_binary, to_binary, BankMsg, Binary, Coin, CosmosMsg, Deps, DepsMut, Env, MessageInfo,
@@ -183,7 +183,7 @@ pub mod execute {
             .add_messages(messages))
     }
 
-    pub fn handle_cw721(
+    pub fn _handle_cw721(
         deps: DepsMut,
         info: MessageInfo,
         env: Env,
@@ -220,7 +220,7 @@ pub mod execute {
 
         AUCTIONS.save(deps.storage, auction_msg.id, &auction)?;
 
-        Ok(Response::new().add_attribute("method", "handle_cw721"))
+        Ok(Response::new().add_attribute("method", "_handle_cw721"))
     }
 
     /// handle receive cw20 token bid request
@@ -229,7 +229,7 @@ pub mod execute {
     /// 2: Whether the time can be bid
     /// 3: Highest bid price
     /// If eligible all bid rules. the bidder be the current winner. and refund to previous winner
-    pub fn handle_cw20_bid(
+    pub fn _handle_cw20_bid(
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
@@ -256,12 +256,6 @@ pub mod execute {
             AuctionStatus::OpeningPeriod,
             "Cannot bid right now"
         );
-
-        // assert_eq!(
-        //     auction.payment_type,
-        //     PaymentType::Cw20,
-        //     "Unsupport cw20 bid payment"
-        // );
 
         let min_price = auction.bid_min_price();
 
@@ -407,16 +401,24 @@ pub mod execute {
             .add_messages(winner_msg))
     }
 
-    pub fn receive(
+    use cw20::Cw20ReceiveMsg;
+
+    pub fn receive_cw20(
         deps: DepsMut,
         env: Env,
         info: MessageInfo,
-        msg: ReceiveMsg,
+        msg: Cw20ReceiveMsg,
     ) -> Result<Response, ContractError> {
-        match msg.amount {
-            Some(amount) => handle_cw20_bid(deps, env, info, msg.sender, amount, msg.msg),
-            None => handle_cw721(deps, info, env, msg.sender, msg.token_id.unwrap(), msg.msg),
-        }
+        _handle_cw20_bid(deps, env, info, msg.sender, msg.amount, msg.msg)
+    }
+
+    pub fn receive_cw721(
+        deps: DepsMut,
+        env: Env,
+        info: MessageInfo,
+        msg: cw721::Cw721ReceiveMsg,
+    ) -> Result<Response, ContractError> {
+        _handle_cw721(deps, info, env, msg.sender, msg.token_id, msg.msg)
     }
 
     /// If the auction was flow. return the token of the seller
