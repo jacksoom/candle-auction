@@ -1,9 +1,10 @@
 use crate::state::{AuctionStatus, PaymentType};
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Binary, Uint128};
+use cosmwasm_std::{Addr, Binary};
+use cw20::Cw20ReceiveMsg;
+use cw721::Cw721ReceiveMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
 /// Auction init msg
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -53,8 +54,8 @@ pub enum ExecuteMsg {
     },
     /// Candle blow
     BlowCandle { auction_id: u64 },
-    /// Receive interface
-    Receive(ReceiveMsg),
+    /// Receive cw20 interface
+    Receive(Cw20ReceiveMsg),
     /// auction flow refund
     FlowRefund { auction_id: u64 },
     /// Bid for denom payment
@@ -62,6 +63,8 @@ pub enum ExecuteMsg {
         bidder: Option<String>,
         auction_id: u64,
     },
+    /// cw721 recive
+    ReceiveNft(Cw721ReceiveMsg),
 }
 
 #[cw_serde]
@@ -88,15 +91,6 @@ pub enum RandQueryMsg {
 pub struct GetResponse {
     /// The randomness if available. When the beacon does not exist, this is an empty value.
     pub randomness: Binary,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub struct ReceiveMsg {
-    pub sender: String,
-    pub amount: Option<Uint128>,
-    pub token_id: Option<String>,
-    pub msg: Binary,
 }
 
 pub mod response {

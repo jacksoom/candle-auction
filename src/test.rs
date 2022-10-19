@@ -8,8 +8,9 @@ mod tests {
     use crate::contract::instantiate;
     use crate::state::PaymentType;
     use cosmwasm_std::{coins, to_binary, Addr, CosmosMsg, Timestamp, Uint128, WasmMsg};
-    use cw721::Cw721ExecuteMsg;
+    use cw721::{Cw721ExecuteMsg, Cw721ReceiveMsg};
     const TEST_DENOM: &str = "ugtb";
+    use cw20::Cw20ReceiveMsg;
 
     #[test]
     fn test_init() {
@@ -125,10 +126,9 @@ mod tests {
             bidder: None,
         };
 
-        let token_msg = ReceiveMsg {
+        let token_msg = Cw20ReceiveMsg {
             sender: "admin1".to_string(),
-            amount: Some(Uint128::new(200u128)),
-            token_id: None,
+            amount: Uint128::new(200u128),
             msg: to_binary(&auction_msg).unwrap(),
         };
 
@@ -149,10 +149,9 @@ mod tests {
             bidder: None,
         };
 
-        let token_msg = ReceiveMsg {
+        let token_msg = Cw20ReceiveMsg {
             sender: "admin2".to_string(),
-            amount: Some(Uint128::new(300u128)),
-            token_id: None,
+            amount: Uint128::new(300u128),
             msg: to_binary(&auction_msg).unwrap(),
         };
 
@@ -222,10 +221,9 @@ mod tests {
             bidder: None,
         };
 
-        let token_msg = ReceiveMsg {
+        let token_msg = Cw721ReceiveMsg {
             sender: "alice".to_string(),
-            token_id: Some("test_token".to_string()),
-            amount: None,
+            token_id: "test_token".to_string(),
             msg: to_binary(&auction_msg).unwrap(),
         };
 
@@ -237,7 +235,7 @@ mod tests {
             deps.as_mut(),
             env,
             info.clone(),
-            ExecuteMsg::Receive(token_msg),
+            ExecuteMsg::ReceiveNft(token_msg),
         )
         .unwrap();
         assert_eq!(res.attributes.len(), 1, "res.attributes is not expect");
@@ -250,10 +248,9 @@ mod tests {
 
         info.sender = Addr::unchecked("cw20_contract_addr1");
 
-        let token_msg1 = ReceiveMsg {
+        let token_msg1 = Cw20ReceiveMsg {
             sender: "bob".to_string(),
-            amount: Some(Uint128::new(300u128)),
-            token_id: None,
+            amount: Uint128::new(300u128),
             msg: to_binary(&auction_msg).unwrap(),
         };
 
@@ -267,10 +264,9 @@ mod tests {
 
         assert!(res.attributes.len() == 1, "attri");
 
-        let token_msg2 = ReceiveMsg {
+        let token_msg2 = Cw20ReceiveMsg {
             sender: "keven".to_string(),
-            amount: Some(Uint128::new(400u128)),
-            token_id: None,
+            amount: Uint128::new(400u128),
             msg: to_binary(&auction_msg).unwrap(),
         };
         let mut env = mock_env();
