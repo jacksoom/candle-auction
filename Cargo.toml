@@ -3,8 +3,10 @@ name = "candle_auction"
 version = "0.1.0"
 edition = "2021"
 authors = ["Jacksoom <lifengliu1994@gmail.com>"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "CosmWasm implementing candle auction"
+license = "Apache-2.0"
+repository = "https://github.com/jacksoom/candle-auction"
+homepage = "https://github.com/jacksoom/candle-auction"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
