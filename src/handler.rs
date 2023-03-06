@@ -14,6 +14,7 @@ use std::hash::{Hash, Hasher};
 use crate::state::{AuctionStatus, AUCTIONS, CONFIG};
 
 const DRAND_NEXT_ROUND_SECURITY: u64 = 10;
+
 pub mod execute {
     //{{{
     use super::*;
@@ -213,7 +214,7 @@ pub mod execute {
         assert_eq!(
             deps.api.addr_humanize(&auction.seller).unwrap().to_string(),
             sender,
-            "now owner"
+            "Not owner"
         );
 
         auction.tokens.push((info.sender.to_string(), token_id));

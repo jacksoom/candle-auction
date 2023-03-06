@@ -1,3 +1,6 @@
+![basic workflow](https://github.com/jacksoom/candle-auction/actions/workflows/Basic.yml/badge.svg)
+![test workflow](https://github.com/jacksoom/candle-auction/actions/workflows/Test.yml/badge.svg)
+[![codecov](https://codecov.io/gh/jacksoom/candle-auction/branch/main/graph/badge.svg)](https://codecov.io/gh/jacksoom/candle-auction)
 # 🕯️ Candle Auctions on CosmWasm! 🎃
 This is an [CosmWasm](https://cosmwasm.com/) smartcontract implementing a [candle auction](https://en.wikipedia.org/wiki/Candle_auction) logic.
 
